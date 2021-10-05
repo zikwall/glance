@@ -7,7 +7,7 @@ type TaskNotFoundError struct {
 }
 
 func (e *TaskNotFoundError) Error() string {
-	return fmt.Sprintf("Task: %s not found in current pool", e.Id)
+	return fmt.Sprintf("task: %s not found in current pool", e.Id)
 }
 
 func TaskNotFound(id string) *TaskNotFoundError {
@@ -19,7 +19,7 @@ type TaskAlreadyExistsError struct {
 }
 
 func (e *TaskAlreadyExistsError) Error() string {
-	return fmt.Sprintf("Task: %s already exists in current pool, skipping it...", e.Id)
+	return fmt.Sprintf("task: %s already exists in current pool, skipping it...", e.Id)
 }
 
 func TaskAlreadyExists(id string) *TaskAlreadyExistsError {

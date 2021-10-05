@@ -129,23 +129,23 @@ func (w *Workspace) tryCancelAndDetach(id string) {
 
 // messages
 func (w *Workspace) launchAsyncTaskMsg(id string) {
-	log.Info(errorless.WithWorkerLabel(w.worker.Name(), fmt.Sprintf("Launch async task ID: %s, attach to pool", id)))
+	log.Info(errorless.WithWorkerLabel(w.worker.Name(), fmt.Sprintf("launch async task ID: %s, attach to pool", id)))
 }
 
 func (w *Workspace) shutdownAsyncTaskMsg(id string) {
-	log.Info(errorless.WithWorkerLabel(w.worker.Name(), fmt.Sprintf("Finished async task ID: %s, removed from pool...", id)))
+	log.Info(errorless.WithWorkerLabel(w.worker.Name(), fmt.Sprintf("finished async task ID: %s, removed from pool...", id)))
 }
 
 func (w *Workspace) exitMsg(success bool) {
 	if success {
-		log.Info(errorless.WithWorkerLabel(w.worker.Name(), "Exit from workspace without error"))
+		log.Info(errorless.WithWorkerLabel(w.worker.Name(), "exit from workspace without error"))
 	} else {
-		log.Warning(errorless.WithWorkerLabel(w.worker.Name(), "Exited after a long wait of 10 seconds from workspace"))
+		log.Warning(errorless.WithWorkerLabel(w.worker.Name(), "exited after a long wait of 10 seconds from workspace"))
 	}
 }
 
 func (w *Workspace) doneAllAsyncTasksMsg() {
-	log.Info(errorless.WithWorkerLabel(w.worker.Name(), "All asynchronous tasks in workspace completed successfully!"))
+	log.Info(errorless.WithWorkerLabel(w.worker.Name(), "all asynchronous tasks in workspace completed successfully!"))
 }
 
 func (w *Workspace) Context() context.Context {
