@@ -21,13 +21,11 @@ type metricWatcher struct {
 
 func execute(rtmp string, id string) (*metricWatcher, error) {
 	file, err := ioutil.TempFile("./tmp", fmt.Sprintf("%s_go_tmp_stream_err_*.log", id))
-
 	if err != nil {
 		return nil, err
 	}
 
 	rt, err := url.Parse(rtmp)
-
 	if err != nil {
 		return nil, err
 	}
