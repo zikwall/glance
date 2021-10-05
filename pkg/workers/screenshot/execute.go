@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
-	"path"
 )
 
 type captureWatcher struct {
@@ -17,31 +16,25 @@ type captureWatcher struct {
 	layout string
 }
 
-func execute(rtmp, upload, id string) (*captureWatcher, error) {
+func (w *Worker) execute(rtmp, upload, id string) (*captureWatcher, error) {
 	file, err := ioutil.TempFile("./tmp", fmt.Sprintf("%s_go_tmp_capture_*.log", id))
-
 	if err != nil {
 		return nil, err
 	}
 
 	u, err := url.Parse(upload)
-
 	if err != nil {
 		return nil, err
 	}
-
-	imagePushURL := ""
-	useUpdate := "1"
-	useStrftime := "0"
-
-	u.Path = path.Join(u.Path, fmt.Sprintf("%s.jpg", id))
-	imagePushURL = u.String()
 
 	rt, err := url.Parse(rtmp)
-
 	if err != nil {
 		return nil, err
 	}
+
+	useUpdate := "1"
+	useStrftime := "0"
+	u.Path = w.formatter.Format(u, nil, id, false)
 
 	args := []string{
 		"-y",
@@ -55,7 +48,7 @@ func execute(rtmp, upload, id string) (*captureWatcher, error) {
 		"-strftime", useStrftime,
 		"-update", useUpdate,
 		"-protocol_opts", "method=PUT",
-		imagePushURL,
+		u.String(),
 	}
 
 	cmd := exec.Command("ffmpeg", args...)

@@ -9,15 +9,18 @@ import (
 )
 
 type Worker struct {
-	upload string
-	name   string
+	upload    string
+	name      string
+	formatter UrlFormatter
 }
 
-func New(name, upload string) *Worker {
-	return &Worker{
-		upload: upload,
-		name:   name,
+func New(name, upload string, formatter UrlFormatter) *Worker {
+	worker := &Worker{
+		upload:    upload,
+		name:      name,
+		formatter: formatter,
 	}
+	return worker
 }
 
 func (w *Worker) Name() string {
@@ -30,7 +33,7 @@ func (w *Worker) Label() string {
 
 func (w *Worker) Perform(ctx context.Context, stream glance.WorkerStream) {
 	id := stream.ID()
-	screenshot, err := execute(stream.URL(), w.upload, id)
+	screenshot, err := w.execute(stream.URL(), w.upload, id)
 
 	if err != nil {
 		errorless.ErrorAsyncNoStarted(w.Name(), id, err)

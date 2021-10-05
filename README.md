@@ -20,7 +20,9 @@ func main() {
 
 	workers := make([]glance.Worker, 0, 2)
 	// add screenshot worker
-	workers = append(workers, screenshot.New("screenshot", "user:pass@webdav-server.com"))
+	workers = append(workers, screenshot.New(
+		"screenshot", "user:pass@webdav-server.com", &screenshot.SimpleUrlFormatter{},
+	))
 	// add metric writer to Clickhouse worker
 	workers = append(workers, metric.New("metric", writerApi))
 	workstation := glance.New(monitoring.Context(), workers...)
