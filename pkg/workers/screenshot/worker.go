@@ -34,7 +34,7 @@ func (w *Worker) Label() string {
 func (w *Worker) Perform(ctx context.Context, stream glance.WorkerStream) {
 	id := stream.ID()
 
-	screenshot, err := w.execute(stream.URL(), w.upload, id)
+	process, err := w.execute(stream.URL(), w.upload, id)
 	if err != nil {
 		errorless.Warning(w.Name(),
 			fmt.Sprintf("[#%s] async process will not be started, previous error: %s", id, err),
@@ -45,16 +45,16 @@ func (w *Worker) Perform(ctx context.Context, stream glance.WorkerStream) {
 
 	NeedKillFFMPEG := true
 	defer func() {
-		screenshot.clearResources()
+		process.clearResources()
 		if NeedKillFFMPEG {
-			screenshot.killProcesses(w.name, id)
+			process.killProcesses(w.name, id)
 		}
 	}()
 
 	EventKillFFMPEG := make(chan error, 1)
 	go func() {
 		select {
-		case EventKillFFMPEG <- screenshot.cmd.Wait():
+		case EventKillFFMPEG <- process.cmd.Wait():
 			return
 		case <-ctx.Done():
 			return
@@ -70,7 +70,9 @@ func (w *Worker) Perform(ctx context.Context, stream glance.WorkerStream) {
 		if exitError, ok := err.(*exec.ExitError); ok {
 			err = fmt.Errorf("exit code is %d: %s", exitError.ExitCode(), exitError.Error())
 		}
-		errorless.Warning(w.Name(), fmt.Sprintf(errorless.ProcessIsDie, id, screenshot.cmd.Process.Pid, err))
+		errorless.Warning(w.Name(),
+			fmt.Sprintf(errorless.ProcessIsDie, id, process.cmd.Process.Pid, err),
+		)
 
 		return
 	}

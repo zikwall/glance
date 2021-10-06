@@ -12,14 +12,14 @@ import (
 	"os/exec"
 )
 
-type metricWatcher struct {
+type process struct {
 	cmd *exec.Cmd
 	r   *io.PipeReader
 	w   *io.PipeWriter
 	f   *os.File
 }
 
-func execute(rtmp string, id string) (*metricWatcher, error) {
+func execute(rtmp string, id string) (*process, error) {
 	file, err := ioutil.TempFile("./tmp", fmt.Sprintf("%s_go_tmp_stream_err_*.log", id))
 	if err != nil {
 		return nil, err
@@ -49,31 +49,31 @@ func execute(rtmp string, id string) (*metricWatcher, error) {
 		return nil, err
 	}
 
-	return &metricWatcher{cmd: cmd, r: r, w: w, f: file}, nil
+	return &process{cmd: cmd, r: r, w: w, f: file}, nil
 }
 
-func (w *metricWatcher) Reader() io.Reader {
-	return bufio.NewReader(w.r)
+func (p *process) Reader() io.Reader {
+	return bufio.NewReader(p.r)
 }
 
-func (w *metricWatcher) clearResources() {
-	if err := w.f.Close(); err != nil {
+func (p *process) clearResources() {
+	if err := p.f.Close(); err != nil {
 		log.Warning(err)
 	}
 
-	if err := w.w.Close(); err != nil {
+	if err := p.w.Close(); err != nil {
 		log.Warning(err)
 	}
 
-	if err := os.Remove(w.f.Name()); err != nil {
+	if err := os.Remove(p.f.Name()); err != nil {
 		log.Warning(err)
 	}
 }
 
-func (w *metricWatcher) killProcesses(name, id string) {
-	if err := w.cmd.Process.Kill(); err != nil && !errorless.IsFinished(err) {
+func (p *process) killProcesses(name, id string) {
+	if err := p.cmd.Process.Kill(); err != nil && !errorless.IsFinished(err) {
 		errorless.Warning(name,
-			fmt.Sprintf("[#%s] failed to kill async proccess PID %d %s", id, w.cmd.Process.Pid, err),
+			fmt.Sprintf("[#%s] failed to kill async proccess PID %d %s", id, p.cmd.Process.Pid, err),
 		)
 	}
 }

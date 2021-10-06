@@ -34,7 +34,7 @@ func (w *Worker) Label() string {
 func (w *Worker) Perform(ctx context.Context, stream glance.WorkerStream) {
 	id := stream.ID()
 
-	watcher, err := execute(stream.URL(), id)
+	process, err := execute(stream.URL(), id)
 	if err != nil {
 		errorless.Warning(w.Name(),
 			fmt.Sprintf("[#%s] async process will not be started, previous error: %s", id, err),
@@ -48,9 +48,9 @@ func (w *Worker) Perform(ctx context.Context, stream glance.WorkerStream) {
 	// example give error - os: process already finished
 	NeedKillFFMPEG := true
 	defer func() {
-		watcher.clearResources()
+		process.clearResources()
 		if NeedKillFFMPEG {
-			watcher.killProcesses(w.name, id)
+			process.killProcesses(w.name, id)
 		}
 	}()
 
@@ -60,7 +60,7 @@ func (w *Worker) Perform(ctx context.Context, stream glance.WorkerStream) {
 	// there is a lock while waiting for the buffer to be read.
 	// In turn blocking by the reader will not allow the background task to finish gracefully
 	go func() {
-		buffer := bufio.NewReader(watcher.r)
+		buffer := bufio.NewReader(process.r)
 		for {
 			line, isPrefix, err := buffer.ReadLine()
 			if err != nil {
@@ -87,7 +87,7 @@ func (w *Worker) Perform(ctx context.Context, stream glance.WorkerStream) {
 	// Note: We listen to the context so as not to leave active goroutines when the task is completed
 	go func() {
 		select {
-		case EventKillFFMPEG <- watcher.cmd.Wait():
+		case EventKillFFMPEG <- process.cmd.Wait():
 			return
 		case <-ctx.Done():
 			return
@@ -111,7 +111,7 @@ func (w *Worker) Perform(ctx context.Context, stream glance.WorkerStream) {
 			if exitError, ok := err.(*exec.ExitError); ok {
 				err = fmt.Errorf("exit code is %d: %s", exitError.ExitCode(), exitError.Error())
 			}
-			errorless.Warning(w.Name(), fmt.Sprintf(errorless.ProcessIsDie, id, watcher.cmd.Process.Pid, err))
+			errorless.Warning(w.Name(), fmt.Sprintf(errorless.ProcessIsDie, id, process.cmd.Process.Pid, err))
 
 			return
 		case csvPartials := <-EventReceiveFFMPEG:
