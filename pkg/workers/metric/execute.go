@@ -41,9 +41,6 @@ func execute(rtmp string, id string) (*metricWatcher, error) {
 	}
 
 	r, w := io.Pipe()
-
-	// use timeouts?
-	// example linux: timeout 10s ffprobe ...
 	cmd := exec.Command("ffprobe", args...)
 	cmd.Stdout = w
 	cmd.Stderr = nil
