@@ -10,13 +10,13 @@ import (
 	"os/exec"
 )
 
-type captureWatcher struct {
+type process struct {
 	cmd    *exec.Cmd
 	temp   *os.File
 	layout string
 }
 
-func (w *Worker) execute(rtmp, upload, id string) (*captureWatcher, error) {
+func (w *Worker) execute(rtmp, upload, id string) (*process, error) {
 	file, err := ioutil.TempFile("./tmp", fmt.Sprintf("%s_go_tmp_capture_*.log", id))
 	if err != nil {
 		return nil, err
@@ -62,23 +62,23 @@ func (w *Worker) execute(rtmp, upload, id string) (*captureWatcher, error) {
 		return nil, err
 	}
 
-	return &captureWatcher{cmd: cmd, temp: file}, nil
+	return &process{cmd: cmd, temp: file}, nil
 }
 
-func (c *captureWatcher) clearResources() {
-	if err := c.temp.Close(); err != nil {
+func (p *process) clearResources() {
+	if err := p.temp.Close(); err != nil {
 		log.Warning(err)
 	}
 
-	if err := os.Remove(c.temp.Name()); err != nil {
+	if err := os.Remove(p.temp.Name()); err != nil {
 		log.Warning(err)
 	}
 }
 
-func (c *captureWatcher) killProcesses(name, id string) {
-	if err := c.cmd.Process.Kill(); err != nil && !errorless.IsFinished(err) {
+func (p *process) killProcesses(name, id string) {
+	if err := p.cmd.Process.Kill(); err != nil && !errorless.IsFinished(err) {
 		errorless.Warning(name,
-			fmt.Sprintf("[#%s] failed to kill async proccess PID %d %s", id, c.cmd.Process.Pid, err),
+			fmt.Sprintf("[#%s] failed to kill async proccess PID %d %s", id, p.cmd.Process.Pid, err),
 		)
 	}
 }
