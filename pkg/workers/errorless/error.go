@@ -6,18 +6,14 @@ import (
 	"strings"
 )
 
-func Info(worker, message string) {
-	log.Info(labeled(worker, message))
-}
-
 func Warning(worker, message string) {
-	log.Warning(labeled(worker, message))
+	log.Warning(Labeled(worker, message))
 }
 
 const ProcessIsDie = "[#%s] async process PID %d was terminated with an error, task is removed from the pool" +
 	" and will be restarted in the future. Previous error '%s'"
 
-func labeled(worker string, message string) string {
+func Labeled(worker string, message string) string {
 	return fmt.Sprintf("%s %s", log.Colored(fmt.Sprintf("[%s]", worker), log.Yellow), message)
 }
 
