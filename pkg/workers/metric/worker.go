@@ -128,7 +128,8 @@ func (w *Worker) Perform(ctx context.Context, stream glance.WorkerStream) {
 					frame.Seconds = seconds
 
 					if frame.Frames != 1 {
-						if err := w.storage.ProcessFrameBatch(id, frame); err != nil {
+						batch := glance.CreateBatch(id, frame)
+						if err := w.storage.ProcessFrameBatch(batch); err != nil {
 							log.Warning(err)
 						}
 					}
