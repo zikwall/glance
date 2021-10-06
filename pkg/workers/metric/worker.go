@@ -122,9 +122,9 @@ func (w *Worker) Perform(ctx context.Context, stream glance.WorkerStream) {
 
 				if isKeyframe(parts[keyframePos]) {
 					frame.Height = stringToInt(parts[heightPos])
-					pkt_pts_time := math.Ceil((stringToFloat64(parts[timePos]))*1000000) / 1000000
+					pktPtsTime := math.Ceil((stringToFloat64(parts[timePos]))*1000000) / 1000000
 
-					seconds := math.Ceil((pkt_pts_time-lastTimestamp)*1000000) / 1000000
+					seconds := math.Ceil((pktPtsTime-lastTimestamp)*1000000) / 1000000
 					frame.Seconds = seconds
 
 					if frame.Frames != 1 {
@@ -134,7 +134,7 @@ func (w *Worker) Perform(ctx context.Context, stream glance.WorkerStream) {
 					}
 
 					frame.Cleanup()
-					lastTimestamp = pkt_pts_time
+					lastTimestamp = pktPtsTime
 				}
 			}
 		}
