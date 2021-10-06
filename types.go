@@ -43,7 +43,7 @@ type Batch struct {
 	KeyframeInterval uint64  `json:"keyframe_interval"`
 }
 
-// Frame structure for counting frames and their parameters
+// Frame types for counting frames and their parameters
 type Frame struct {
 	Frames           int
 	Bytes            int
@@ -79,8 +79,9 @@ func CreateBatch(id string, frame Frame) Batch {
 		KeyframeInterval: uint64(frame.KeyframeInterval),
 	}
 
-	batch.Date = date(time.Now())
-	batch.InsertTs = datetime(time.Now())
+	now := time.Now()
+	batch.Date = date(now)
+	batch.InsertTs = datetime(now)
 
 	// calculate
 	fps := float64(batch.Frames) / batch.Seconds
