@@ -76,9 +76,9 @@ func (c *captureWatcher) clearResources() {
 }
 
 func (c *captureWatcher) killProcesses(name, id string) {
-	if err := c.cmd.Process.Kill(); err != nil && !errorless.IsAlreadyFinished(err) {
-		errorless.ErrorFailedKillProcess(name, id, c.cmd.Process.Pid, err)
-	} else {
-		errorless.InfoSuccessKillProcess(name, id, c.cmd.Process.Pid)
+	if err := c.cmd.Process.Kill(); err != nil && !errorless.IsFinished(err) {
+		errorless.Warning(name,
+			fmt.Sprintf("[#%s] failed to kill async proccess PID %d %s", id, c.cmd.Process.Pid, err),
+		)
 	}
 }

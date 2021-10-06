@@ -71,9 +71,9 @@ func (w *metricWatcher) clearResources() {
 }
 
 func (w *metricWatcher) killProcesses(name, id string) {
-	if err := w.cmd.Process.Kill(); err != nil && !errorless.IsAlreadyFinished(err) {
-		errorless.ErrorFailedKillProcess(name, id, w.cmd.Process.Pid, err)
-	} else {
-		errorless.InfoSuccessKillProcess(name, id, w.cmd.Process.Pid)
+	if err := w.cmd.Process.Kill(); err != nil && !errorless.IsFinished(err) {
+		errorless.Warning(name,
+			fmt.Sprintf("[#%s] failed to kill async proccess PID %d %s", id, w.cmd.Process.Pid, err),
+		)
 	}
 }

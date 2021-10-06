@@ -134,15 +134,15 @@ func (w *Workspace) tryCancelAndDetach(id string) {
 
 // messages
 func (w *Workspace) launchAsyncTaskMsg(id string) {
-	log.Info(errorless.WithWorkerLabel(w.worker.Name(), fmt.Sprintf("launch async task ID: %s, attach to pool", id)))
+	log.Info(errorless.Labeled(w.worker.Name(), fmt.Sprintf("[#%s] launch, attach to pool", id)))
 }
 
 func (w *Workspace) shutdownAsyncTaskMsg(id string) {
-	log.Info(errorless.WithWorkerLabel(w.worker.Name(), fmt.Sprintf("finished async task ID: %s, removed from pool...", id)))
+	log.Info(errorless.Labeled(w.worker.Name(), fmt.Sprintf("[#%s] finished, removed from pool", id)))
 }
 
 func (w *Workspace) doneAllAsyncTasksMsg() {
-	log.Info(errorless.WithWorkerLabel(w.worker.Name(), "all asynchronous tasks in workspace completed successfully!"))
+	log.Info(errorless.Labeled(w.worker.Name(), "all asynchronous tasks in workspace completed successfully!"))
 }
 
 func (w *Workspace) Context() context.Context {

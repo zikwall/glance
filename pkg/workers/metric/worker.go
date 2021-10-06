@@ -28,43 +28,45 @@ func (w *Worker) Name() string {
 }
 
 func (w *Worker) Label() string {
-	return "metric "
+	return "metric"
 }
 
 func (w *Worker) Perform(ctx context.Context, stream glance.WorkerStream) {
 	id := stream.ID()
-	watcher, err := execute(stream.URL(), id)
 
+	watcher, err := execute(stream.URL(), id)
 	if err != nil {
-		errorless.ErrorAsyncNoStarted(w.Name(), id, err)
+		errorless.Warning(w.Name(),
+			fmt.Sprintf("[#%s] async process will not be started, previous error: %s", id, err),
+		)
+
 		return
 	}
 
 	// If an asynchronous task fails with an ffmpeg process error,
 	// then there is no need to kill the process, since it has already been killed
 	// example give error - os: process already finished
-	killFFMPEG := true
+	NeedKillFFMPEG := true
 	defer func() {
 		watcher.clearResources()
-		if killFFMPEG {
+		if NeedKillFFMPEG {
 			watcher.killProcesses(w.name, id)
 		}
 	}()
 
-	FFMPEGOut := make(chan string, 1000)
-	FFMPEGKill := make(chan error, 1)
+	EventReceiveFFMPEG := make(chan string, 1000)
+	EventKillFFMPEG := make(chan error, 1)
 	// Runs a separate sub-thread, because when running in a single thread,
 	// there is a lock while waiting for the buffer to be read.
 	// In turn blocking by the reader will not allow the background task to finish gracefully
 	go func() {
-		bufioReader := bufio.NewReader(watcher.r)
+		buffer := bufio.NewReader(watcher.r)
 		for {
-			line, isPrefix, err := bufioReader.ReadLine()
+			line, isPrefix, err := buffer.ReadLine()
 			if err != nil {
 				if err != io.EOF {
-					errorless.ErrorCloseProcessStdoutReader(w.Name(), id, err)
-				} else {
-					errorless.InfoCloseProcessStdoutReader(w.Name(), id)
+					errorless.Warning(w.Name(),
+						fmt.Sprintf("[#%s] reading from stdout completed (with error), cause %s", id, err))
 				}
 
 				return
@@ -75,7 +77,7 @@ func (w *Worker) Perform(ctx context.Context, stream glance.WorkerStream) {
 				continue
 			}
 
-			FFMPEGOut <- str
+			EventReceiveFFMPEG <- str
 		}
 	}()
 
@@ -85,7 +87,7 @@ func (w *Worker) Perform(ctx context.Context, stream glance.WorkerStream) {
 	// Note: We listen to the context so as not to leave active goroutines when the task is completed
 	go func() {
 		select {
-		case FFMPEGKill <- watcher.cmd.Wait():
+		case EventKillFFMPEG <- watcher.cmd.Wait():
 			return
 		case <-ctx.Done():
 			return
@@ -103,26 +105,26 @@ func (w *Worker) Perform(ctx context.Context, stream glance.WorkerStream) {
 		select {
 		case <-ctx.Done():
 			return
-		case err = <-FFMPEGKill:
+		case err = <-EventKillFFMPEG:
+			NeedKillFFMPEG = false
+
 			if exitError, ok := err.(*exec.ExitError); ok {
 				err = fmt.Errorf("exit code is %d: %s", exitError.ExitCode(), exitError.Error())
 			}
-
-			errorless.ErrorProcessKilled(w.Name(), id, watcher.cmd.Process.Pid, err)
-			killFFMPEG = false
+			errorless.Warning(w.Name(), fmt.Sprintf(errorless.ProcessIsDie, id, watcher.cmd.Process.Pid, err))
 
 			return
-		case outPartial := <-FFMPEGOut:
-			parts := strings.Split(outPartial, ",")
+		case csvPartials := <-EventReceiveFFMPEG:
+			partials := strings.Split(csvPartials, ",")
 
-			if len(parts) == partialSize || len(parts) == partialSizeWithBrokenSideData {
+			if len(partials) == partialSize || len(partials) == partialSizeWithBrokenSideData {
 				frame.IncreasingContinue(
-					stringToInt(parts[bytesPos]),
+					stringToInt(partials[bytesPos]),
 				)
 
-				if isKeyframe(parts[keyframePos]) {
-					frame.Height = stringToInt(parts[heightPos])
-					pktPtsTime := math.Ceil((stringToFloat64(parts[timePos]))*1000000) / 1000000
+				if isKeyframe(partials[keyframePos]) {
+					frame.Height = stringToInt(partials[heightPos])
+					pktPtsTime := math.Ceil((stringToFloat64(partials[timePos]))*1000000) / 1000000
 
 					seconds := math.Ceil((pktPtsTime-lastTimestamp)*1000000) / 1000000
 					frame.Seconds = seconds
