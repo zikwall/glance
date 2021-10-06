@@ -4,25 +4,22 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	clickhousebuffer "github.com/zikwall/clickhouse-buffer"
 	"github.com/zikwall/glance"
+	"github.com/zikwall/glance/pkg/log"
 	"github.com/zikwall/glance/pkg/workers/errorless"
 	"io"
 	"math"
 	"os/exec"
 	"strings"
-	"time"
 )
 
 type Worker struct {
-	name   string
-	writer clickhousebuffer.Writer
+	name    string
+	storage glance.Storage
 }
 
-func New(name string, writer clickhousebuffer.Writer) *Worker {
-	w := &Worker{
-		name: name, writer: writer,
-	}
+func New(name string, storage glance.Storage) *Worker {
+	w := &Worker{name: name, storage: storage}
 	return w
 }
 
@@ -100,7 +97,7 @@ func (w *Worker) Perform(ctx context.Context, stream glance.WorkerStream) {
 	const bytesPos = 3
 	const heightPos = 4
 
-	frame := Frame{}
+	frame := glance.Frame{}
 	var lastTimestamp float64
 	for {
 		select {
@@ -119,24 +116,24 @@ func (w *Worker) Perform(ctx context.Context, stream glance.WorkerStream) {
 			parts := strings.Split(outPartial, ",")
 
 			if len(parts) == partialSize || len(parts) == partialSizeWithBrokenSideData {
-				frame.increasingContinue(
-					StringToInt(parts[bytesPos]),
+				frame.IncreasingContinue(
+					stringToInt(parts[bytesPos]),
 				)
 
-				//fmt.Println(id, time.Now().String(), frame)
-
 				if isKeyframe(parts[keyframePos]) {
-					frame.height = StringToInt(parts[heightPos])
-					pkt_pts_time := math.Ceil((StringToFloat64(parts[timePos]))*1000000) / 1000000
+					frame.Height = stringToInt(parts[heightPos])
+					pkt_pts_time := math.Ceil((stringToFloat64(parts[timePos]))*1000000) / 1000000
 
 					seconds := math.Ceil((pkt_pts_time-lastTimestamp)*1000000) / 1000000
-					frame.seconds = seconds
+					frame.Seconds = seconds
 
-					if frame.frames != 1 {
-						w.processFrameBatch(id, frame)
+					if frame.Frames != 1 {
+						if err := w.storage.ProcessFrameBatch(id, frame); err != nil {
+							log.Warning(err)
+						}
 					}
 
-					frame.cleanup()
+					frame.Cleanup()
 					lastTimestamp = pkt_pts_time
 				}
 			}
@@ -146,26 +143,4 @@ func (w *Worker) Perform(ctx context.Context, stream glance.WorkerStream) {
 
 func isKeyframe(frame string) bool {
 	return frame == "1"
-}
-
-func (w *Worker) processFrameBatch(id string, frame Frame) {
-	batch := &Batch{
-		StreamId:         id,
-		Seconds:          frame.seconds,
-		Bytes:            uint64(frame.bytes),
-		Frames:           uint64(frame.frames),
-		Height:           uint64(frame.height),
-		KeyframeInterval: uint64(frame.keyframe_interval),
-	}
-
-	batch.Date = Date(time.Now())
-	batch.InsertTs = Datetime(time.Now())
-
-	// calculate
-	fps := float64(batch.Frames) / batch.Seconds
-	batch.Fps = math.Round(fps*100) / 100
-	bitrate := float64(frame.bytes*bitsInBytes) / (frame.seconds * bytesInKb)
-	batch.Bitrate = math.Round(bitrate*1000) / 1000
-
-	w.writer.WriteRow(batch)
 }

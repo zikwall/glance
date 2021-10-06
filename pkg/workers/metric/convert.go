@@ -5,9 +5,8 @@ import (
 	"strconv"
 )
 
-func StringToInt(s string) int {
+func stringToInt(s string) int {
 	n, err := strconv.Atoi(s)
-
 	if err != nil {
 		return 0
 	}
@@ -15,9 +14,8 @@ func StringToInt(s string) int {
 	return n
 }
 
-func StringToFloat64(s string) float64 {
+func stringToFloat64(s string) float64 {
 	value, err := strconv.ParseFloat(s, 64)
-
 	if err != nil {
 		return 0
 	}

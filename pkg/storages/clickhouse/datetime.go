@@ -1,4 +1,4 @@
-package metric
+package clickhouse
 
 import (
 	"time"
@@ -7,11 +7,11 @@ import (
 const DateTimeFormat = "2006-01-02 15:04:05"
 const DateFormat = "2006-01-02"
 
-func Date(t time.Time) string {
+func date(t time.Time) string {
 	return format(t, DateFormat)
 }
 
-func Datetime(t time.Time) string {
+func datetime(t time.Time) string {
 	return format(t, DateTimeFormat)
 }
 
