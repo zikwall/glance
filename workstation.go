@@ -3,6 +3,7 @@ package glance
 import (
 	"context"
 	"fmt"
+	"github.com/zikwall/glance/pkg/log"
 	"runtime"
 	"sort"
 	"sync"
@@ -25,6 +26,12 @@ func (wi WorkerItem) URL() string {
 type Workstation struct {
 	spaces    map[string]*Workspace
 	mu        sync.RWMutex
+	startedAt time.Time
+}
+
+type Process struct {
+	ctx       context.Context
+	cancel    context.CancelFunc
 	startedAt time.Time
 }
 
@@ -122,8 +129,16 @@ func (w *Workstation) WorkstationInformation() Info {
 	return info
 }
 
-type Process struct {
-	ctx       context.Context
-	cancel    context.CancelFunc
-	startedAt time.Time
+func (w *Workstation) Drop() error {
+	for _, space := range w.spaces {
+		if err := space.Drop(); err != nil {
+			log.Warning(err)
+		}
+	}
+
+	return nil
+}
+
+func (w *Workstation) DropMsg() string {
+	return "glance completed successfully"
 }

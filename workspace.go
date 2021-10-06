@@ -2,12 +2,17 @@ package glance
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/zikwall/glance/pkg/log"
 	"github.com/zikwall/glance/pkg/workers/errorless"
 	"sync"
 	"time"
 )
+
+const shutdownWaitDuration = time.Second * 5
+
+var ErrorShutdownWithoutGracefulCompletion = errors.New("shutdown completed without graceful completion")
 
 type Workspace struct {
 	mu      sync.RWMutex
@@ -136,14 +141,6 @@ func (w *Workspace) shutdownAsyncTaskMsg(id string) {
 	log.Info(errorless.WithWorkerLabel(w.worker.Name(), fmt.Sprintf("finished async task ID: %s, removed from pool...", id)))
 }
 
-func (w *Workspace) exitMsg(success bool) {
-	if success {
-		log.Info(errorless.WithWorkerLabel(w.worker.Name(), "exit from workspace without error"))
-	} else {
-		log.Warning(errorless.WithWorkerLabel(w.worker.Name(), "exited after a long wait of 10 seconds from workspace"))
-	}
-}
-
 func (w *Workspace) doneAllAsyncTasksMsg() {
 	log.Info(errorless.WithWorkerLabel(w.worker.Name(), "all asynchronous tasks in workspace completed successfully!"))
 }
@@ -153,12 +150,12 @@ func (w *Workspace) Context() context.Context {
 }
 
 // The method waits for graceful completion or crashes after a certain amount of time
-func (w *Workspace) await() {
+func (w *Workspace) await() error {
 	select {
 	case <-w.done:
-		w.exitMsg(true)
-	case <-time.After(10 * time.Second):
-		w.exitMsg(false)
+		return nil
+	case <-time.After(shutdownWaitDuration):
+		return ErrorShutdownWithoutGracefulCompletion
 	}
 }
 
@@ -177,21 +174,5 @@ func (w *Workspace) Drop() error {
 	}()
 
 	// waiting for a message about the completion of tasks, or completing
-	w.await()
-
-	return nil
-}
-
-func (w *Workstation) Drop() error {
-	for _, space := range w.spaces {
-		if err := space.Drop(); err != nil {
-			log.Warning(err)
-		}
-	}
-
-	return nil
-}
-
-func (w *Workstation) DropMsg() string {
-	return "glance completed successfully"
+	return w.await()
 }
