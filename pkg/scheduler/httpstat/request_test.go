@@ -20,6 +20,10 @@ func TestRequestContext(t *testing.T) {
 		}
 
 		statuses := getHTTPStatuses(ctx, mockRequests)
+		if len(statuses) == 0 {
+			t.Fatal("Failed. give empty response")
+		}
+
 		for _, status := range statuses {
 			if status.Error != nil {
 				t.Fatal(status.Error)
