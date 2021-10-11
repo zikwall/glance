@@ -68,8 +68,8 @@ func getHTTPStatuses(ctx context.Context, streams glance.Collection) []Status {
 	th := make([][]Request, threads)
 	cn := parts(len(streams.Streams))
 
-	for i := 1; i <= threads; i++ {
-		th[i] = make([]Request, cn)
+	for i := 1; i < threads; i++ {
+		th[i] = make([]Request, 0, cn)
 	}
 
 	index := 0

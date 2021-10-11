@@ -27,7 +27,7 @@ func (r *Request) RequestContext(ctx context.Context, url string) (int, error) {
 		return 0, err
 	}
 
-	ctx, cancel := context.WithTimeout(req.Context(), 500*time.Millisecond)
+	ctx, cancel := context.WithTimeout(req.Context(), 1000*time.Millisecond)
 	defer cancel()
 
 	req = req.WithContext(ctx)
@@ -51,8 +51,8 @@ func asyncRequests(ctx context.Context, count int, requests ...[]Request) []Stat
 		wg.Add(1)
 		go func(n int, requesters []Request) {
 			defer wg.Done()
-			log.Info(fmt.Sprintf("request #%d is pending", n))
-			defer log.Info(fmt.Sprintf("request #%d is done", n))
+			log.Info(fmt.Sprintf("request group #%d is pending", n))
+			defer log.Info(fmt.Sprintf("request group #%d is done", n))
 
 			for _, request := range requesters {
 				select {
@@ -60,7 +60,7 @@ func asyncRequests(ctx context.Context, count int, requests ...[]Request) []Stat
 					return
 				default:
 				}
-				code, err := request.RequestContext(ctx, request.ID)
+				code, err := request.RequestContext(ctx, request.URL)
 				pool <- Future{
 					ID:       request.URL,
 					HTTPCode: code,
