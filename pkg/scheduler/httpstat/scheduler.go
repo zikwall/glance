@@ -1,4 +1,4 @@
-package http
+package httpstat
 
 import (
 	"context"
@@ -15,18 +15,18 @@ type Status struct {
 	Error error
 }
 
-type Scheduler struct {
+type scheduler struct {
 	fetcher         glance.Fetcher
 	storage         StatusWriter
 	refreshInterval time.Duration
 }
 
-func New(fetcher glance.Fetcher, storage StatusWriter, refresh time.Duration) *Scheduler {
-	scheduler := &Scheduler{fetcher: fetcher, storage: storage, refreshInterval: refresh}
+func NewScheduler(fetcher glance.Fetcher, storage StatusWriter, refresh time.Duration) *scheduler {
+	scheduler := &scheduler{fetcher: fetcher, storage: storage, refreshInterval: refresh}
 	return scheduler
 }
 
-func (s *Scheduler) RunContext(ctx context.Context) {
+func (s *scheduler) RunContext(ctx context.Context) {
 	ticker := time.NewTicker(s.refreshInterval)
 	for {
 		select {
@@ -50,7 +50,7 @@ func (s *Scheduler) RunContext(ctx context.Context) {
 					continue
 				}
 
-				err = s.storage.Write(&Bucket{
+				err = s.storage.Write(Bucket{
 					StreamID:   "",
 					Code:       0,
 					InsertTS:   now,
@@ -65,11 +65,11 @@ func (s *Scheduler) RunContext(ctx context.Context) {
 }
 
 func getHTTPStatuses(ctx context.Context, streams glance.Collection) []Status {
-	th := make([][]Request, threads)
+	th := make([][]request, threads)
 	cn := parts(len(streams.Streams))
 
 	for i := 1; i < threads; i++ {
-		th[i] = make([]Request, 0, cn)
+		th[i] = make([]request, 0, cn)
 	}
 
 	index := 0
@@ -78,9 +78,9 @@ func getHTTPStatuses(ctx context.Context, streams glance.Collection) []Status {
 			index++
 		}
 
-		th[index] = append(th[index], Request{
-			ID:  stream.ID(),
-			URL: stream.URL(),
+		th[index] = append(th[index], request{
+			id:  stream.ID(),
+			url: stream.URL(),
 		})
 	}
 

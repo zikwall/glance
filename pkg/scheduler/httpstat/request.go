@@ -1,4 +1,4 @@
-package http
+package httpstat
 
 import (
 	"context"
@@ -10,18 +10,18 @@ import (
 	"time"
 )
 
-type Future struct {
-	ID       string
-	HTTPCode int
-	Error    error
+type future struct {
+	id   string
+	code int
+	err  error
 }
 
-type Request struct {
-	ID  string
-	URL string
+type request struct {
+	id  string
+	url string
 }
 
-func (r *Request) RequestContext(ctx context.Context, url string) (int, error) {
+func (r *request) RequestContext(ctx context.Context, url string) (int, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return 0, err
@@ -41,15 +41,15 @@ func (r *Request) RequestContext(ctx context.Context, url string) (int, error) {
 	return res.StatusCode, nil
 }
 
-func asyncRequests(ctx context.Context, count int, requests ...[]Request) []Status {
+func asyncRequests(ctx context.Context, count int, requests ...[]request) []Status {
 	ctx, cancel := context.WithTimeout(ctx, 60_000*time.Millisecond)
-	pool := make(chan Future, 5)
+	pool := make(chan future, 5)
 
 	wg := &sync.WaitGroup{}
 	for i, r := range requests {
 		n := i
 		wg.Add(1)
-		go func(n int, requesters []Request) {
+		go func(n int, requesters []request) {
 			defer wg.Done()
 			log.Info(fmt.Sprintf("request group #%d is pending", n))
 			defer log.Info(fmt.Sprintf("request group #%d is done", n))
@@ -60,11 +60,11 @@ func asyncRequests(ctx context.Context, count int, requests ...[]Request) []Stat
 					return
 				default:
 				}
-				code, err := request.RequestContext(ctx, request.URL)
-				pool <- Future{
-					ID:       request.URL,
-					HTTPCode: code,
-					Error:    err,
+				code, err := request.RequestContext(ctx, request.url)
+				pool <- future{
+					id:   request.id,
+					code: code,
+					err:  err,
 				}
 			}
 		}(n, r)
@@ -84,9 +84,9 @@ loop:
 			break loop
 		case value := <-pool:
 			values = append(values, Status{
-				ID:    value.ID,
-				Code:  value.HTTPCode,
-				Error: value.Error,
+				ID:    value.id,
+				Code:  value.code,
+				Error: value.err,
 			})
 		}
 	}

@@ -1,7 +1,7 @@
-package http
+package httpstat
 
 type StatusWriter interface {
-	Write(bucket *Bucket) error
+	Write(bucket Bucket) error
 }
 
 type Bucket struct {

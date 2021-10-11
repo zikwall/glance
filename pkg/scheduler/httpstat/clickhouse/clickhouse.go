@@ -3,30 +3,27 @@ package clickhouse
 import (
 	clickhousebuffer "github.com/zikwall/clickhouse-buffer"
 	"github.com/zikwall/clickhouse-buffer/src/buffer"
+	"github.com/zikwall/glance/pkg/scheduler/httpstat"
 )
 
-type Clickhouse struct {
+type writerImpl struct {
 	writer clickhousebuffer.Writer
 }
 
-func NewWriter(writer clickhousebuffer.Writer) *Clickhouse {
-	ch := &Clickhouse{writer: writer}
+func NewHTTPStatWriter(writer clickhousebuffer.Writer) httpstat.StatusWriter {
+	ch := &writerImpl{writer: writer}
 	return ch
 }
 
-func (c *Clickhouse) Write(bucket *Bucket) error {
-	c.writer.WriteRow(bucket)
+func (c *writerImpl) Write(bucket httpstat.Bucket) error {
+	alias := BucketAlias(bucket)
+	c.writer.WriteRow(&alias)
 	return nil
 }
 
-type Bucket struct {
-	StreamID   string
-	Code       int
-	InsertTS   string
-	InsertDate string
-}
+type BucketAlias httpstat.Bucket
 
-func (b *Bucket) Row() buffer.RowSlice {
+func (b *BucketAlias) Row() buffer.RowSlice {
 	return buffer.RowSlice{
 		b.StreamID, b.Code, b.InsertTS, b.InsertDate,
 	}
