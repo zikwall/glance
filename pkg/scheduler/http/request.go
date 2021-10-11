@@ -2,8 +2,11 @@ package http
 
 import (
 	"context"
+	"fmt"
+	"github.com/zikwall/glance/pkg/log"
 	"math"
 	"net/http"
+	"sync"
 	"time"
 )
 
@@ -40,36 +43,47 @@ func (r *Request) RequestContext(ctx context.Context, url string) (int, error) {
 
 func asyncRequests(ctx context.Context, count int, requests ...[]Request) []Status {
 	ctx, cancel := context.WithTimeout(ctx, 60_000*time.Millisecond)
-	pool := make(chan FutureResponse, count)
+	pool := make(chan FutureResponse, 5)
 
-	defer func() {
-		cancel()
-		close(pool)
-	}()
-
+	wg := &sync.WaitGroup{}
 	for i, r := range requests {
 		n := i
-
+		wg.Add(1)
 		go func(n int, requesters []Request) {
+			log.Info(fmt.Sprintf("request #%d is pending", n))
+			defer log.Info(fmt.Sprintf("request #%d is done", n))
+
 			for _, request := range requesters {
 				code, err := request.RequestContext(ctx, request.ID)
-
 				pool <- FutureResponse{
 					ID:       request.URL,
 					HTTPCode: code,
 					Error:    err,
 				}
 			}
+			wg.Done()
 		}(n, r)
 	}
 
+	go func() {
+		wg.Wait()
+		cancel()
+		close(pool)
+	}()
+
 	values := make([]Status, 0, count)
-	for value := range pool {
-		values = append(values, Status{
-			ID:    value.ID,
-			Code:  value.HTTPCode,
-			Error: value.Error,
-		})
+loop:
+	for {
+		select {
+		case <-ctx.Done():
+			break loop
+		case value := <-pool:
+			values = append(values, Status{
+				ID:    value.ID,
+				Code:  value.HTTPCode,
+				Error: value.Error,
+			})
+		}
 	}
 
 	return values
