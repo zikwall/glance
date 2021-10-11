@@ -50,10 +50,16 @@ func asyncRequests(ctx context.Context, count int, requests ...[]Request) []Stat
 		n := i
 		wg.Add(1)
 		go func(n int, requesters []Request) {
+			defer wg.Done()
 			log.Info(fmt.Sprintf("request #%d is pending", n))
 			defer log.Info(fmt.Sprintf("request #%d is done", n))
 
 			for _, request := range requesters {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+				}
 				code, err := request.RequestContext(ctx, request.ID)
 				pool <- FutureResponse{
 					ID:       request.URL,
@@ -61,7 +67,6 @@ func asyncRequests(ctx context.Context, count int, requests ...[]Request) []Stat
 					Error:    err,
 				}
 			}
-			wg.Done()
 		}(n, r)
 	}
 
