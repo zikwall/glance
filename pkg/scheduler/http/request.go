@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-type FutureResponse struct {
+type Future struct {
 	ID       string
 	HTTPCode int
 	Error    error
@@ -43,7 +43,7 @@ func (r *Request) RequestContext(ctx context.Context, url string) (int, error) {
 
 func asyncRequests(ctx context.Context, count int, requests ...[]Request) []Status {
 	ctx, cancel := context.WithTimeout(ctx, 60_000*time.Millisecond)
-	pool := make(chan FutureResponse, 5)
+	pool := make(chan Future, 5)
 
 	wg := &sync.WaitGroup{}
 	for i, r := range requests {
@@ -61,7 +61,7 @@ func asyncRequests(ctx context.Context, count int, requests ...[]Request) []Stat
 				default:
 				}
 				code, err := request.RequestContext(ctx, request.ID)
-				pool <- FutureResponse{
+				pool <- Future{
 					ID:       request.URL,
 					HTTPCode: code,
 					Error:    err,

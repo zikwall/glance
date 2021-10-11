@@ -40,9 +40,10 @@ func (s *Scheduler) RunContext(ctx context.Context) {
 				continue
 			}
 
-			statuses := checkStatuses(ctx, streams)
 			now := glance.Datetime(time.Now())
 			dat := glance.Date(time.Now())
+			statuses := getHTTPStatuses(ctx, streams)
+
 			for _, status := range statuses {
 				if status.Error != nil {
 					log.Warning(err)
@@ -55,7 +56,6 @@ func (s *Scheduler) RunContext(ctx context.Context) {
 					InsertTS:   now,
 					InsertDate: dat,
 				})
-
 				if err != nil {
 					log.Warning(err)
 				}
@@ -64,7 +64,7 @@ func (s *Scheduler) RunContext(ctx context.Context) {
 	}
 }
 
-func checkStatuses(ctx context.Context, streams glance.Collection) []Status {
+func getHTTPStatuses(ctx context.Context, streams glance.Collection) []Status {
 	th := make([][]Request, threads)
 	cn := parts(len(streams.Streams))
 
