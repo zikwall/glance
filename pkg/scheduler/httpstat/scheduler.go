@@ -27,6 +27,8 @@ func NewScheduler(fetcher glance.Fetcher, storage StatusWriter, refresh time.Dur
 }
 
 func (s *scheduler) RunContext(ctx context.Context) {
+	log.Info("run HTTP stats scheduler")
+	defer log.Info("stop HTTP stats scheduler")
 	ticker := time.NewTicker(s.refreshInterval)
 	for {
 		select {
@@ -34,6 +36,8 @@ func (s *scheduler) RunContext(ctx context.Context) {
 			ticker.Stop()
 			return
 		case <-ticker.C:
+			log.Info("get HTTP statuses")
+
 			streams, err := s.fetcher.FetchStreams(ctx)
 			if err != nil {
 				log.Warning(err)
