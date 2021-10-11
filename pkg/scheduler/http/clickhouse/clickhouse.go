@@ -31,3 +31,7 @@ func (b *Bucket) Row() buffer.RowSlice {
 		b.StreamID, b.Code, b.InsertTS, b.InsertDate,
 	}
 }
+
+func GetTableColumns() []string {
+	return []string{"stream_id", "code", "insert_ts", "insert_date"}
+}
