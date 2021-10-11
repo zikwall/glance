@@ -80,8 +80,8 @@ func CreateBatch(id string, frame Frame) Batch {
 	}
 
 	now := time.Now()
-	batch.Date = date(now)
-	batch.InsertTs = datetime(now)
+	batch.Date = Date(now)
+	batch.InsertTs = Datetime(now)
 
 	// calculate
 	fps := float64(batch.Frames) / batch.Seconds
@@ -104,11 +104,11 @@ func (i Collection) Exist(key string) bool {
 const DateTimeFormat = "2006-01-02 15:04:05"
 const DateFormat = "2006-01-02"
 
-func date(t time.Time) string {
+func Date(t time.Time) string {
 	return format(t, DateFormat)
 }
 
-func datetime(t time.Time) string {
+func Datetime(t time.Time) string {
 	return format(t, DateTimeFormat)
 }
 
