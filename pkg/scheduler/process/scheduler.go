@@ -1,4 +1,4 @@
-package scheduler
+package process
 
 import (
 	"context"
@@ -14,16 +14,16 @@ type Options struct {
 	WorkspaceMetrics    *glance.Workspace
 }
 
-type Scheduler struct {
+type scheduler struct {
 	fetcher glance.Fetcher
 }
 
-func New(fetcher glance.Fetcher) *Scheduler {
-	scheduler := &Scheduler{fetcher: fetcher}
+func NewScheduler(fetcher glance.Fetcher) *scheduler {
+	scheduler := &scheduler{fetcher: fetcher}
 	return scheduler
 }
 
-func (s *Scheduler) RunContext(ctx context.Context, options Options) {
+func (s *scheduler) RunContext(ctx context.Context, options Options) {
 	s.justRun(ctx, options.WorkspaceMetrics, options.WorkspaceScreenshot)
 
 	defer log.Info("monitoring thread update scheduler is being terminated")
@@ -87,7 +87,7 @@ func refresh(t string, space *glance.Workspace, fetched glance.Collection) {
 	}
 }
 
-func (s *Scheduler) justRun(ctx context.Context, monitoring, screenshot *glance.Workspace) {
+func (s *scheduler) justRun(ctx context.Context, monitoring, screenshot *glance.Workspace) {
 	streams, err := s.fetcher.FetchStreams(ctx)
 	if err != nil {
 		log.Warning(err)
