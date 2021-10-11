@@ -3,7 +3,7 @@ CREATE DATABASE stream ON CLUSTER cluster_1;
 CREATE TABLE stream.http_status ON CLUSTER cluster_1
 (
     `stream_id`   String,
-    `code`        Int8,
+    `code`        Int32,
     `insert_ts`   DateTime,
     `insert_date` Date
 )
@@ -12,7 +12,7 @@ CREATE TABLE stream.http_status ON CLUSTER cluster_1
 CREATE TABLE stream.http_status_sharded ON CLUSTER cluster_1
 (
     `stream_id`   String,
-    `code`        Int8,
+    `code`        Int32,
     `insert_ts`   DateTime,
     `insert_date` Date
 )
