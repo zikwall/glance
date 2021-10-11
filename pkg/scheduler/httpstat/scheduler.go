@@ -55,8 +55,8 @@ func (s *scheduler) RunContext(ctx context.Context) {
 				}
 
 				err = s.storage.Write(Bucket{
-					StreamID:   "",
-					Code:       0,
+					StreamID:   status.ID,
+					Code:       status.Code,
 					InsertTS:   now,
 					InsertDate: dat,
 				})
