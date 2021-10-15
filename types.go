@@ -113,6 +113,6 @@ func Datetime(t time.Time) string {
 }
 
 func format(t time.Time, format string) string {
-	location, _ := time.LoadLocation("Europe/Moscow")
+	location, _ := time.LoadLocation("UTC")
 	return t.In(location).Format(format)
 }
