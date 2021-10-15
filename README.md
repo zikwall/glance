@@ -19,3 +19,7 @@ else in the future
 #### Screenshots 
 
 Take screenshots with some frequency, there is a possibility of a customizable link to the images. 
+
+#### HTTP checker 
+
+Periodically (configurable) checks the statuses of HTTP responses of the stream
