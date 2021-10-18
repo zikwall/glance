@@ -17,7 +17,11 @@ FPS | Bitrate | Height | Keyframe | HTTP |
 ##### Available storages
 
   - [x] **Clickhouse**
+    - [x] Migrations 
+    - [x] Query builders 
   - [ ] **Influxdb**
+    - [ ] Migrations
+    - [ ] Query builders
   - [ ] Other: **mysql, postgres, mssql** (all this is done easily by implementing the appropriate interface)
 
 #### Screenshots 
