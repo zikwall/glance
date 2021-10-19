@@ -87,6 +87,33 @@ func GranularityToString(granularity time.Duration) (string, int64, error) {
 	return timeFunc, seconds, nil
 }
 
+// BuildSummaryQuery Suitable for Pie-type charts
+func BuildSummaryQuery(from, to time.Time, valueExp, keyColumn, tableName string) *builder.SelectDataset {
+	query := builder.
+		Select(
+			builder.L(valueExp).As("value"),
+			builder.C(keyColumn).As("label"),
+		).
+		From(tableName).
+		Where(
+			builder.Or(
+				builder.C("insert_date").Gte(Date(from)),
+				builder.C("insert_date").Lte(Date(to)),
+			),
+			builder.And(
+				builder.C("insert_ts").Gte(Datetime(from)),
+				builder.C("insert_ts").Lte(Datetime(to)),
+			),
+		).
+		GroupBy(
+			builder.C(keyColumn),
+		).
+		Order(
+			builder.C("value").Desc(),
+		)
+	return query
+}
+
 // BuildTimeSeriesQuery Unified creates a final time series query
 //
 // sql, _, _ := mainSeries.ToSQL()
