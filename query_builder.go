@@ -156,7 +156,7 @@ func BuildTimeSeriesQueries(
 ) {
 	mainQuery := builder.
 		Select(
-			builder.L(fmt.Sprintf("%s(insert_ts)", timeFunc)).As("time"),
+			builder.L(fmt.Sprintf(wrapTimeGranulationFunction(timeFunc), timeFunc, "insert_ts")).As("time"),
 			builder.L(valueColumnExp).As(valueColumnName),
 			builder.C(keyColumn),
 		).
@@ -190,7 +190,9 @@ func BuildTimeSeriesQueries(
 		From(
 			builder.
 				Select(
-					builder.L(fmt.Sprintf(matchFunction(timeFunc), timeFunc, Datetime(from), granularitySeconds)).As("ts"),
+					builder.L(
+						fmt.Sprintf(wrapTimeGranulationFunction(timeFunc), timeFunc, Datetime(from), granularitySeconds),
+					).As("ts"),
 				).
 				From(
 					builder.L(fmt.Sprintf("system.numbers limit %d", countNumbers)),
@@ -220,15 +222,26 @@ func BuildTimeSeriesQueries(
 	return mainQuery, timeSeries, keySeries
 }
 
-func matchFunction(timeFunc string) string {
+func wrapTimeGranulationFunction(timeFunc string) string {
 	switch timeFunc {
 	case "toStartOfWeek":
-		return "toDateTime(toUnixTimestamp(toDateTime(%s(toDateTime('%s'), 1)))+number*%d)"
+		return "toDateTime(toUnixTimestamp(toDateTime(%s(toDateTime('%s'), 3)))+number*%d)"
 	case "toStartOfMonth", "toStartOfQuarter":
 		return "toDateTime(toUnixTimestamp(toDateTime(%s(toDateTime('%s'))))+number*%d)"
 	}
 
 	return "toDateTime(toUnixTimestamp(%s(toDateTime('%s')))+number*%d)"
+}
+
+func wrapTimeFunction(timeFunc string) string {
+	switch timeFunc {
+	case "toStartOfWeek":
+		return "%s(%s, 3)"
+	case "toStartOfMonth", "toStartOfQuarter":
+		return "%s(%s)"
+	}
+
+	return "%s(%s)"
 }
 
 type Point struct {
