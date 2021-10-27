@@ -156,7 +156,7 @@ func BuildTimeSeriesQueries(
 ) {
 	mainQuery := builder.
 		Select(
-			builder.L(fmt.Sprintf(wrapTimeGranulationFunction(timeFunc), timeFunc, "insert_ts")).As("time"),
+			builder.L(fmt.Sprintf(wrapTimeFunction(timeFunc), timeFunc, "insert_ts")).As("time"),
 			builder.L(valueColumnExp).As(valueColumnName),
 			builder.C(keyColumn),
 		).
