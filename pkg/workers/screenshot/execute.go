@@ -48,8 +48,8 @@ func (w *Worker) execute(rtmp, upload, id string) (*process, error) {
 		"-f", "image2",
 	}...)
 
-	for name, value := range w.options.HTTPHeaders {
-		args = append(args, name)
+	for _, value := range w.options.HTTPHeaders {
+		args = append(args, "-headers")
 		args = append(args, value)
 	}
 

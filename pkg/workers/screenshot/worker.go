@@ -16,7 +16,7 @@ type Worker struct {
 }
 
 type Options struct {
-	HTTPHeaders map[string]string
+	HTTPHeaders []string
 }
 
 func New(name, upload string, formatter UrlFormatter, options *Options) *Worker {

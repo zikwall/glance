@@ -31,8 +31,8 @@ func (a *Worker) execute(rtmp string, id string) (*process, error) {
 	}
 
 	var args []string
-	for name, value := range a.options.HTTPHeaders {
-		args = append(args, name)
+	for _, value := range a.options.HTTPHeaders {
+		args = append(args, "-headers")
 		args = append(args, value)
 	}
 	args = append(args, []string{

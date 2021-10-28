@@ -20,7 +20,7 @@ type Worker struct {
 }
 
 type Options struct {
-	HTTPHeaders map[string]string
+	HTTPHeaders []string
 }
 
 func New(name string, storage glance.Storage, options *Options) *Worker {
