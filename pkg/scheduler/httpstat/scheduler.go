@@ -27,7 +27,7 @@ type Options struct {
 }
 
 func NewScheduler(fetcher glance.Fetcher, storage StatusWriter, options *Options) *scheduler {
-	scheduler := &scheduler{fetcher: fetcher, storage: storage}
+	scheduler := &scheduler{fetcher: fetcher, storage: storage, options: options}
 	return scheduler
 }
 
