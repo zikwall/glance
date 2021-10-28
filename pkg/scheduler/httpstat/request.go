@@ -21,7 +21,7 @@ type request struct {
 	url string
 }
 
-func (r *request) RequestContext(ctx context.Context, url string) (int, error) {
+func (r *request) RequestContext(ctx context.Context, url string, headers map[string]string) (int, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return 0, err
@@ -33,6 +33,10 @@ func (r *request) RequestContext(ctx context.Context, url string) (int, error) {
 	req = req.WithContext(ctx)
 	client := http.DefaultClient
 
+	for name, value := range headers {
+		req.Header.Set(name, value)
+	}
+
 	res, err := client.Do(req)
 	if err != nil {
 		return 0, err
@@ -41,7 +45,7 @@ func (r *request) RequestContext(ctx context.Context, url string) (int, error) {
 	return res.StatusCode, nil
 }
 
-func asyncRequests(ctx context.Context, count int, requests ...[]request) []Status {
+func asyncRequests(ctx context.Context, count int, headers map[string]string, requests ...[]request) []Status {
 	ctx, cancel := context.WithTimeout(ctx, 60_000*time.Millisecond)
 	pool := make(chan future, 5)
 
@@ -60,7 +64,7 @@ func asyncRequests(ctx context.Context, count int, requests ...[]request) []Stat
 					return
 				default:
 				}
-				code, err := request.RequestContext(ctx, request.url)
+				code, err := request.RequestContext(ctx, request.url, headers)
 				pool <- future{
 					id:   request.id,
 					code: code,

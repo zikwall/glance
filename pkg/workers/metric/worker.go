@@ -16,10 +16,15 @@ import (
 type Worker struct {
 	name    string
 	storage glance.Storage
+	options *Options
 }
 
-func New(name string, storage glance.Storage) *Worker {
-	w := &Worker{name: name, storage: storage}
+type Options struct {
+	HTTPHeaders map[string]string
+}
+
+func New(name string, storage glance.Storage, options *Options) *Worker {
+	w := &Worker{name: name, storage: storage, options: options}
 	return w
 }
 
@@ -34,7 +39,7 @@ func (w *Worker) Label() string {
 func (w *Worker) Perform(ctx context.Context, stream glance.WorkerStream) {
 	id := stream.ID()
 
-	process, err := execute(stream.URL(), id)
+	process, err := w.execute(stream.URL(), id)
 	if err != nil {
 		errorless.Warning(w.Name(),
 			fmt.Sprintf("[#%s] async process will not be started, previous error: %s", id, err),

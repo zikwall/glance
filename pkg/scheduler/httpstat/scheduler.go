@@ -16,20 +16,25 @@ type Status struct {
 }
 
 type scheduler struct {
-	fetcher         glance.Fetcher
-	storage         StatusWriter
-	refreshInterval time.Duration
+	fetcher glance.Fetcher
+	storage StatusWriter
+	options *Options
 }
 
-func NewScheduler(fetcher glance.Fetcher, storage StatusWriter, refresh time.Duration) *scheduler {
-	scheduler := &scheduler{fetcher: fetcher, storage: storage, refreshInterval: refresh}
+type Options struct {
+	HTTPHeaders map[string]string
+	Refresh     time.Duration
+}
+
+func NewScheduler(fetcher glance.Fetcher, storage StatusWriter, options *Options) *scheduler {
+	scheduler := &scheduler{fetcher: fetcher, storage: storage}
 	return scheduler
 }
 
 func (s *scheduler) RunContext(ctx context.Context) {
 	log.Info("run HTTP stats scheduler")
 	defer log.Info("stop HTTP stats scheduler")
-	ticker := time.NewTicker(s.refreshInterval)
+	ticker := time.NewTicker(s.options.Refresh)
 	for {
 		select {
 		case <-ctx.Done():
@@ -46,7 +51,7 @@ func (s *scheduler) RunContext(ctx context.Context) {
 
 			now := glance.Datetime(time.Now())
 			dat := glance.Date(time.Now())
-			statuses := getHTTPStatuses(ctx, streams)
+			statuses := getHTTPStatuses(ctx, streams, s.options.HTTPHeaders)
 
 			for _, status := range statuses {
 				if status.Error != nil {
@@ -68,7 +73,7 @@ func (s *scheduler) RunContext(ctx context.Context) {
 	}
 }
 
-func getHTTPStatuses(ctx context.Context, streams glance.Collection) []Status {
+func getHTTPStatuses(ctx context.Context, streams glance.Collection, headers map[string]string) []Status {
 	th := make([][]request, threads)
 	cn := parts(len(streams.Streams))
 
@@ -88,5 +93,5 @@ func getHTTPStatuses(ctx context.Context, streams glance.Collection) []Status {
 		})
 	}
 
-	return asyncRequests(ctx, cn*threads, th...)
+	return asyncRequests(ctx, cn*threads, headers, th...)
 }
