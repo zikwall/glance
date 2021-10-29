@@ -36,7 +36,8 @@ func (w *Worker) execute(rtmp, upload, id string) (*process, error) {
 	useStrftime := "0"
 	u.Path = w.formatter.Format(u, nil, id, false)
 
-	args := []string{
+	var args []string
+	args = append(args, []string{
 		"-y",
 		"-nostdin",
 		"-threads", "1",
@@ -45,11 +46,19 @@ func (w *Worker) execute(rtmp, upload, id string) (*process, error) {
 		"-vsync", "0",
 		"-r", "30",
 		"-f", "image2",
+	}...)
+
+	for _, value := range w.options.HTTPHeaders {
+		args = append(args, "-headers")
+		args = append(args, value)
+	}
+
+	args = append(args, []string{
 		"-strftime", useStrftime,
 		"-update", useUpdate,
 		"-protocol_opts", "method=PUT",
 		u.String(),
-	}
+	}...)
 
 	cmd := exec.Command("ffmpeg", args...)
 	cmd.Stdout = file

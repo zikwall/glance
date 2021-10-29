@@ -12,13 +12,19 @@ type Worker struct {
 	upload    string
 	name      string
 	formatter UrlFormatter
+	options   *Options
 }
 
-func New(name, upload string, formatter UrlFormatter) *Worker {
+type Options struct {
+	HTTPHeaders []string
+}
+
+func New(name, upload string, formatter UrlFormatter, options *Options) *Worker {
 	worker := &Worker{
 		upload:    upload,
 		name:      name,
 		formatter: formatter,
+		options:   options,
 	}
 	return worker
 }

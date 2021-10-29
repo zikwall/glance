@@ -19,7 +19,7 @@ type process struct {
 	f   *os.File
 }
 
-func execute(rtmp string, id string) (*process, error) {
+func (a *Worker) execute(rtmp string, id string) (*process, error) {
 	file, err := ioutil.TempFile("./tmp", fmt.Sprintf("%s_go_tmp_stream_err_*.log", id))
 	if err != nil {
 		return nil, err
@@ -30,7 +30,12 @@ func execute(rtmp string, id string) (*process, error) {
 		return nil, err
 	}
 
-	args := []string{
+	var args []string
+	for _, value := range a.options.HTTPHeaders {
+		args = append(args, "-headers")
+		args = append(args, value)
+	}
+	args = append(args, []string{
 		"-loglevel", "error",
 		"-threads", "1",
 		"-select_streams", "v:0",
@@ -38,7 +43,7 @@ func execute(rtmp string, id string) (*process, error) {
 		"-show_entries", "frame=key_frame,pkt_pts_time,pkt_size,height,repeat_pict",
 		"-of", "csv",
 		rt.String(),
-	}
+	}...)
 
 	r, w := io.Pipe()
 	cmd := exec.Command("ffprobe", args...)
