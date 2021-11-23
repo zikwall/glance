@@ -25,8 +25,8 @@ const (
 )
 
 // ParseGranularity Converts the test granularity to its analogous value in the time object
-func ParseGranularity(granularity string) (granularitySeconds time.Duration, err error) {
-	switch granularity {
+func ParseGranularity(granularityStr string) (granularity time.Duration, err error) {
+	switch granularityStr {
 	case "minute", "1m":
 		return time.Minute, nil
 	case "5 minutes", "5m":
@@ -222,11 +222,17 @@ func BuildTimeSeriesQueries(
 	return mainQuery, timeSeries, keySeries
 }
 
+const (
+	toStartOfWeek    = "toStartOfWeek"
+	toStartOfMonth   = "toStartOfMonth"
+	toStartOfQuarter = "toStartOfQuarter"
+)
+
 func wrapTimeGranulationFunction(timeFunc string) string {
 	switch timeFunc {
-	case "toStartOfWeek":
+	case toStartOfWeek:
 		return "toDateTime(toUnixTimestamp(toDateTime(%s(toDateTime('%s'), 3)))+number*%d)"
-	case "toStartOfMonth", "toStartOfQuarter":
+	case toStartOfMonth, toStartOfQuarter:
 		return "toDateTime(toUnixTimestamp(toDateTime(%s(toDateTime('%s'))))+number*%d)"
 	}
 
@@ -235,9 +241,9 @@ func wrapTimeGranulationFunction(timeFunc string) string {
 
 func wrapTimeFunction(timeFunc string) string {
 	switch timeFunc {
-	case "toStartOfWeek":
+	case toStartOfWeek:
 		return "%s(%s, 3)"
-	case "toStartOfMonth", "toStartOfQuarter":
+	case toStartOfMonth, toStartOfQuarter:
 		return "%s(%s)"
 	}
 
@@ -286,6 +292,7 @@ func BuildPoints(timeLayout string, points []Point) UnifiedLinearPoints {
 			})
 		}
 
+		// nolint:scopelint // its OK
 		sort.Slice(serial[code], func(d, e int) bool {
 			return serial[code][d].Time < serial[code][e].Time
 		})

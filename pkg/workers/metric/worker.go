@@ -28,18 +28,20 @@ func New(name string, storage glance.Storage, options *Options) *Worker {
 	return w
 }
 
+const metric = "metric"
+
 func (w *Worker) Name() string {
-	return "metric"
+	return metric
 }
 
 func (w *Worker) Label() string {
-	return "metric"
+	return metric
 }
 
 func (w *Worker) Perform(ctx context.Context, stream glance.WorkerStream) {
-	id := stream.ID()
+	id := stream.GetID()
 
-	process, err := w.execute(stream.URL(), id)
+	process, err := w.execute(stream.GetURL(), id)
 	if err != nil {
 		errorless.Warning(w.Name(),
 			fmt.Sprintf("[#%s] async process will not be started, previous error: %s", id, err),

@@ -14,11 +14,11 @@ type MockWorkerStream struct {
 	app string
 }
 
-func (w MockWorkerStream) ID() string {
+func (w MockWorkerStream) GetID() string {
 	return w.id
 }
 
-func (w MockWorkerStream) URL() string {
+func (w MockWorkerStream) GetURL() string {
 	return w.id
 }
 

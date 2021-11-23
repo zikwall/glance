@@ -6,12 +6,12 @@ import (
 	"path"
 )
 
-type UrlFormatter interface {
+type URLFormatter interface {
 	Format(push, pull *url.URL, id string, useStrftime bool) string
 }
 
-type SimpleUrlFormatter struct{}
+type SimpleURLFormatter struct{}
 
-func (sf *SimpleUrlFormatter) Format(push, _ *url.URL, id string, _ bool) string {
+func (sf *SimpleURLFormatter) Format(push, _ *url.URL, id string, _ bool) string {
 	return path.Join(push.Path, fmt.Sprintf("%s.jpg", id))
 }

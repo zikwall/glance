@@ -13,7 +13,7 @@ func Warning(worker, message string) {
 const ProcessIsDie = "[#%s] async process PID %d was terminated with an error, task is removed from the pool" +
 	" and will be restarted in the future. Previous error '%s'"
 
-func Labeled(worker string, message string) string {
+func Labeled(worker, message string) string {
 	return fmt.Sprintf("%s %s", log.Colored(fmt.Sprintf("[%s]", worker), log.Yellow), message)
 }
 

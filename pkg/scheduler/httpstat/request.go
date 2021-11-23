@@ -22,22 +22,19 @@ type request struct {
 }
 
 func (r *request) RequestContext(ctx context.Context, url string, headers map[string]string) (int, error) {
-	req, err := http.NewRequest("GET", url, nil)
+	reqCtx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(reqCtx, "GET", url, http.NoBody)
 	if err != nil {
 		return 0, err
 	}
-
-	ctx, cancel := context.WithTimeout(req.Context(), 1000*time.Millisecond)
-	defer cancel()
-
-	req = req.WithContext(ctx)
-	client := http.DefaultClient
 
 	for name, value := range headers {
 		req.Header.Set(name, value)
 	}
 
-	res, err := client.Do(req)
+	res, err := (http.DefaultClient).Do(req)
 	if err != nil {
 		return 0, err
 	}

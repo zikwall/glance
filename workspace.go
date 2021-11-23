@@ -40,7 +40,7 @@ func NewWorkspace(context context.Context, worker Worker) *Workspace {
 // PerformAsync Initializes the task and runs it in the background.
 // The task is handled by a worker defined by the worker interface, where the Perform method is defined
 func (w *Workspace) PerformAsync(stream WorkerStream) error {
-	id := stream.ID()
+	id := stream.GetID()
 	if w.lookupAsyncTask(id) {
 		return errorless.TaskAlreadyExists(id)
 	}
@@ -99,7 +99,7 @@ func (w *Workspace) ActiveTasks() Collection {
 
 	for id := range w.tasks {
 		collection.Streams[id] = WorkerItem{
-			Id: id,
+			ID: id,
 		}
 	}
 	w.mu.RUnlock()

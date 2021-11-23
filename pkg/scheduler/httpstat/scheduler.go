@@ -15,7 +15,7 @@ type Status struct {
 	Error error
 }
 
-type scheduler struct {
+type Scheduler struct {
 	fetcher glance.Fetcher
 	storage StatusWriter
 	options *Options
@@ -26,12 +26,12 @@ type Options struct {
 	Refresh     time.Duration
 }
 
-func NewScheduler(fetcher glance.Fetcher, storage StatusWriter, options *Options) *scheduler {
-	scheduler := &scheduler{fetcher: fetcher, storage: storage, options: options}
+func NewScheduler(fetcher glance.Fetcher, storage StatusWriter, options *Options) *Scheduler {
+	scheduler := &Scheduler{fetcher: fetcher, storage: storage, options: options}
 	return scheduler
 }
 
-func (s *scheduler) RunContext(ctx context.Context) {
+func (s *Scheduler) RunContext(ctx context.Context) {
 	log.Info("run HTTP stats scheduler")
 	defer log.Info("stop HTTP stats scheduler")
 	ticker := time.NewTicker(s.options.Refresh)
@@ -88,8 +88,8 @@ func getHTTPStatuses(ctx context.Context, streams glance.Collection, headers map
 		}
 
 		th[index] = append(th[index], request{
-			id:  stream.ID(),
-			url: stream.URL(),
+			id:  stream.GetID(),
+			url: stream.GetURL(),
 		})
 	}
 

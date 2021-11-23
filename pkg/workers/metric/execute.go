@@ -78,7 +78,7 @@ func (p *process) clearResources() {
 func (p *process) killProcesses(name, id string) {
 	if err := p.cmd.Process.Kill(); err != nil && !errorless.IsFinished(err) {
 		errorless.Warning(name,
-			fmt.Sprintf("[#%s] failed to kill async proccess PID %d %s", id, p.cmd.Process.Pid, err),
+			fmt.Sprintf("[#%s] failed to kill async process PID %d %s", id, p.cmd.Process.Pid, err),
 		)
 	}
 }

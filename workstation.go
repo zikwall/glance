@@ -11,16 +11,16 @@ import (
 )
 
 type WorkerItem struct {
-	Id  string
-	Url string
+	ID  string
+	URL string
 }
 
-func (wi WorkerItem) ID() string {
-	return wi.Id
+func (wi WorkerItem) GetID() string {
+	return wi.ID
 }
 
-func (wi WorkerItem) URL() string {
-	return wi.Url
+func (wi WorkerItem) GetURL() string {
+	return wi.URL
 }
 
 type Workstation struct {
@@ -54,7 +54,7 @@ func (w *Workstation) Workspace(name string) (*Workspace, error) {
 	workspace, ok := w.spaces[name]
 
 	if !ok {
-		return nil, fmt.Errorf("Workspace '%s' not found", name)
+		return nil, fmt.Errorf("workspace '%s' not found", name)
 	}
 
 	return workspace, nil
