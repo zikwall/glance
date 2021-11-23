@@ -1,6 +1,7 @@
 -- this migration use in external service
 CREATE TABLE stream.heatmap ON CLUSTER cluster_1
 (
+    `stream_id`   String,
     `uniqid`      String,
     `device_id`   String,
     `platform`    String,
@@ -17,6 +18,7 @@ CREATE TABLE stream.heatmap ON CLUSTER cluster_1
 
 CREATE TABLE stream.heatmap_sharded ON CLUSTER cluster_1
 (
+    `stream_id`   String,
     `uniqid`      String,
     `device_id`   String,
     `platform`    String,
@@ -33,3 +35,6 @@ CREATE TABLE stream.heatmap_sharded ON CLUSTER cluster_1
     PARTITION BY toYYYYMM(insert_date)
     ORDER BY (platform, insert_date)
     TTL insert_ts + INTERVAL 13 MONTH;
+
+-- ALTER TABLE stream.heatmap ON CLUSTER cluster_1 ADD COLUMN stream_id String FIRST;
+-- ALTER TABLE stream.heatmap_sharded ON CLUSTER cluster_1 ADD COLUMN stream_id String FIRST;
