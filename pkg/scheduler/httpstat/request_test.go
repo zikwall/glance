@@ -19,7 +19,7 @@ func TestRequestContext(t *testing.T) {
 			},
 		}
 
-		statuses := getHTTPStatuses(ctx, mockRequests)
+		statuses := getHTTPStatuses(ctx, mockRequests, map[string]string{})
 		if len(statuses) == 0 {
 			t.Fatal("Failed. give empty response")
 		}

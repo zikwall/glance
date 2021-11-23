@@ -42,6 +42,10 @@ func (r *request) RequestContext(ctx context.Context, url string, headers map[st
 		return 0, err
 	}
 
+	defer func() {
+		_ = res.Body.Close()
+	}()
+
 	return res.StatusCode, nil
 }
 
