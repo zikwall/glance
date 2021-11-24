@@ -4,13 +4,14 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"github.com/zikwall/glance"
-	"github.com/zikwall/glance/pkg/log"
-	"github.com/zikwall/glance/pkg/workers/errorless"
 	"io"
 	"math"
 	"os/exec"
 	"strings"
+
+	"github.com/zikwall/glance"
+	"github.com/zikwall/glance/pkg/log"
+	"github.com/zikwall/glance/pkg/workers/errorless"
 )
 
 type Worker struct {
@@ -28,18 +29,22 @@ func New(name string, storage glance.Storage, options *Options) *Worker {
 	return w
 }
 
+const metric = "metric"
+
 func (w *Worker) Name() string {
-	return "metric"
+	return metric
 }
 
+// nolint:stylecheck // its OK
 func (w *Worker) Label() string {
-	return "metric"
+	return metric
 }
 
+// nolint:gocyclo // its OK cyclomatic complexity not important here
 func (w *Worker) Perform(ctx context.Context, stream glance.WorkerStream) {
-	id := stream.ID()
+	id := stream.GetID()
 
-	process, err := w.execute(stream.URL(), id)
+	process, err := w.execute(stream.GetURL(), id)
 	if err != nil {
 		errorless.Warning(w.Name(),
 			fmt.Sprintf("[#%s] async process will not be started, previous error: %s", id, err),
@@ -136,7 +141,7 @@ func (w *Worker) Perform(ctx context.Context, stream glance.WorkerStream) {
 
 					if frame.Frames != 1 {
 						batch := glance.CreateBatch(id, frame)
-						if err := w.storage.ProcessFrameBatch(batch); err != nil {
+						if err := w.storage.ProcessFrameBatch(&batch); err != nil {
 							log.Warning(err)
 						}
 					}

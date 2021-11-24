@@ -2,18 +2,18 @@ package screenshot
 
 import (
 	"fmt"
-	"github.com/zikwall/glance/pkg/log"
-	"github.com/zikwall/glance/pkg/workers/errorless"
 	"io/ioutil"
 	"net/url"
 	"os"
 	"os/exec"
+
+	"github.com/zikwall/glance/pkg/log"
+	"github.com/zikwall/glance/pkg/workers/errorless"
 )
 
 type process struct {
-	cmd    *exec.Cmd
-	temp   *os.File
-	layout string
+	cmd  *exec.Cmd
+	temp *os.File
 }
 
 func (w *Worker) execute(rtmp, upload, id string) (*process, error) {
@@ -49,8 +49,7 @@ func (w *Worker) execute(rtmp, upload, id string) (*process, error) {
 	}...)
 
 	for _, value := range w.options.HTTPHeaders {
-		args = append(args, "-headers")
-		args = append(args, value)
+		args = append(args, "-headers", value)
 	}
 
 	args = append(args, []string{
@@ -87,7 +86,7 @@ func (p *process) clearResources() {
 func (p *process) killProcesses(name, id string) {
 	if err := p.cmd.Process.Kill(); err != nil && !errorless.IsFinished(err) {
 		errorless.Warning(name,
-			fmt.Sprintf("[#%s] failed to kill async proccess PID %d %s", id, p.cmd.Process.Pid, err),
+			fmt.Sprintf("[#%s] failed to kill async process PID %d %s", id, p.cmd.Process.Pid, err),
 		)
 	}
 }

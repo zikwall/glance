@@ -3,9 +3,10 @@ package process
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/zikwall/glance"
 	"github.com/zikwall/glance/pkg/log"
-	"time"
 )
 
 type Options struct {
@@ -14,16 +15,16 @@ type Options struct {
 	WorkspaceMetrics    *glance.Workspace
 }
 
-type scheduler struct {
+type Scheduler struct {
 	fetcher glance.Fetcher
 }
 
-func NewScheduler(fetcher glance.Fetcher) *scheduler {
-	scheduler := &scheduler{fetcher: fetcher}
+func NewScheduler(fetcher glance.Fetcher) *Scheduler {
+	scheduler := &Scheduler{fetcher: fetcher}
 	return scheduler
 }
 
-func (s *scheduler) RunContext(ctx context.Context, options Options) {
+func (s *Scheduler) RunContext(ctx context.Context, options Options) {
 	s.justRun(ctx, options.WorkspaceMetrics, options.WorkspaceScreenshot)
 
 	defer log.Info("monitoring thread update scheduler is being terminated")
@@ -56,9 +57,9 @@ func refresh(t string, space *glance.Workspace, fetched glance.Collection) {
 	// if is active
 	// if is not fetched
 	// stop
-	for activeId := range spaced.Streams {
-		if !fetched.Exist(activeId) {
-			if err := space.FinishAsyncTask(activeId); err != nil {
+	for activeID := range spaced.Streams {
+		if !fetched.Exist(activeID) {
+			if err := space.FinishAsyncTask(activeID); err != nil {
 				log.Warning(fmt.Sprintf("%s STOPING  %s", t, err))
 			} else {
 				stopped++
@@ -69,9 +70,9 @@ func refresh(t string, space *glance.Workspace, fetched glance.Collection) {
 	// if is not active
 	// if is fetched
 	// start
-	for fetchedId, stream := range fetched.Streams {
+	for fetchedID, stream := range fetched.Streams {
 		// if not exists -> run async
-		if !spaced.Exist(fetchedId) {
+		if !spaced.Exist(fetchedID) {
 			if err := space.PerformAsync(stream); err != nil {
 				log.Warning(fmt.Sprintf("%s STARTING %s", t, err))
 			} else {
@@ -87,7 +88,7 @@ func refresh(t string, space *glance.Workspace, fetched glance.Collection) {
 	}
 }
 
-func (s *scheduler) justRun(ctx context.Context, monitoring, screenshot *glance.Workspace) {
+func (s *Scheduler) justRun(ctx context.Context, monitoring, screenshot *glance.Workspace) {
 	streams, err := s.fetcher.FetchStreams(ctx)
 	if err != nil {
 		log.Warning(err)

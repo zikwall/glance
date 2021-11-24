@@ -3,11 +3,11 @@ package errorless
 import "fmt"
 
 type TaskNotFoundError struct {
-	Id string
+	ID string
 }
 
 func (e *TaskNotFoundError) Error() string {
-	return fmt.Sprintf("task: %s not found in current pool", e.Id)
+	return fmt.Sprintf("task: %s not found in current pool", e.ID)
 }
 
 func TaskNotFound(id string) *TaskNotFoundError {
@@ -15,11 +15,11 @@ func TaskNotFound(id string) *TaskNotFoundError {
 }
 
 type TaskAlreadyExistsError struct {
-	Id string
+	ID string
 }
 
 func (e *TaskAlreadyExistsError) Error() string {
-	return fmt.Sprintf("task: %s already exists in current pool, skipping it...", e.Id)
+	return fmt.Sprintf("task: %s already exists in current pool, skipping it...", e.ID)
 }
 
 func TaskAlreadyExists(id string) *TaskAlreadyExistsError {

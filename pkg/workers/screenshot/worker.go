@@ -3,15 +3,16 @@ package screenshot
 import (
 	"context"
 	"fmt"
+	"os/exec"
+
 	"github.com/zikwall/glance"
 	"github.com/zikwall/glance/pkg/workers/errorless"
-	"os/exec"
 )
 
 type Worker struct {
 	upload    string
 	name      string
-	formatter UrlFormatter
+	formatter URLFormatter
 	options   *Options
 }
 
@@ -19,7 +20,7 @@ type Options struct {
 	HTTPHeaders []string
 }
 
-func New(name, upload string, formatter UrlFormatter, options *Options) *Worker {
+func New(name, upload string, formatter URLFormatter, options *Options) *Worker {
 	worker := &Worker{
 		upload:    upload,
 		name:      name,
@@ -38,9 +39,9 @@ func (w *Worker) Label() string {
 }
 
 func (w *Worker) Perform(ctx context.Context, stream glance.WorkerStream) {
-	id := stream.ID()
+	id := stream.GetID()
 
-	process, err := w.execute(stream.URL(), w.upload, id)
+	process, err := w.execute(stream.GetURL(), w.upload, id)
 	if err != nil {
 		errorless.Warning(w.Name(),
 			fmt.Sprintf("[#%s] async process will not be started, previous error: %s", id, err),

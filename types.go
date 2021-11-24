@@ -8,7 +8,7 @@ import (
 
 // Storage basic interface that implements data saving
 type Storage interface {
-	ProcessFrameBatch(batch Batch) error
+	ProcessFrameBatch(batch *Batch) error
 }
 
 // Fetcher interface that implements formatting of screenshot links
@@ -25,17 +25,17 @@ type Worker interface {
 }
 
 type WorkerStream interface {
-	ID() string
-	URL() string
+	GetID() string
+	GetURL() string
 }
 
 // Batch type is the main structure for generating and sending data to the storage
 type Batch struct {
 	Date             string  `json:"date"`
-	InsertTs         string  `json:"insert_ts"`
+	InsertTS         string  `json:"insert_ts"`
 	Fps              float64 `json:"fps"`
 	Bitrate          float64 `json:"bitrate"`
-	StreamId         string  `json:"stream_id"`
+	StreamID         string  `json:"stream_id"`
 	Seconds          float64 `json:"seconds"`
 	Bytes            uint64  `json:"bytes"`
 	Frames           uint64  `json:"frames"`
@@ -54,8 +54,8 @@ type Frame struct {
 
 func (f *Frame) IncreasingContinue(bytes int) {
 	f.Bytes += bytes
-	f.Frames += 1
-	f.KeyframeInterval += 1
+	f.Frames++
+	f.KeyframeInterval++
 }
 
 func (f *Frame) Cleanup() {
@@ -71,7 +71,7 @@ const bytesInKb = 1024
 
 func CreateBatch(id string, frame Frame) Batch {
 	batch := Batch{
-		StreamId:         id,
+		StreamID:         id,
 		Seconds:          frame.Seconds,
 		Bytes:            uint64(frame.Bytes),
 		Frames:           uint64(frame.Frames),
@@ -81,7 +81,7 @@ func CreateBatch(id string, frame Frame) Batch {
 
 	now := time.Now()
 	batch.Date = Date(now)
-	batch.InsertTs = Datetime(now)
+	batch.InsertTS = Datetime(now)
 
 	// calculate
 	fps := float64(batch.Frames) / batch.Seconds

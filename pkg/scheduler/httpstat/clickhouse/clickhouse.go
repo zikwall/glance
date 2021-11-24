@@ -3,6 +3,7 @@ package clickhouse
 import (
 	clickhousebuffer "github.com/zikwall/clickhouse-buffer"
 	"github.com/zikwall/clickhouse-buffer/src/buffer"
+
 	"github.com/zikwall/glance/pkg/scheduler/httpstat"
 )
 

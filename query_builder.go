@@ -3,10 +3,11 @@ package glance
 import (
 	"errors"
 	"fmt"
-	builder "github.com/doug-martin/goqu/v9"
 	"math"
 	"sort"
 	"time"
+
+	builder "github.com/doug-martin/goqu/v9"
 )
 
 var (
@@ -25,8 +26,8 @@ const (
 )
 
 // ParseGranularity Converts the test granularity to its analogous value in the time object
-func ParseGranularity(granularity string) (granularitySeconds time.Duration, err error) {
-	switch granularity {
+func ParseGranularity(granularityStr string) (granularity time.Duration, err error) {
+	switch granularityStr {
 	case "minute", "1m":
 		return time.Minute, nil
 	case "5 minutes", "5m":
@@ -49,12 +50,8 @@ func ParseGranularity(granularity string) (granularitySeconds time.Duration, err
 }
 
 // GranularityToString Converts the duration to the corresponding function in Clickhouse
-func GranularityToString(granularity time.Duration) (string, int64, error) {
-	var (
-		timeFunc string
-		seconds  int64
-	)
-
+// nolint:gocyclo // its OK cyclomatic complexity not important here
+func GranularityToString(granularity time.Duration) (timeFunc string, seconds int64, err error) {
 	switch {
 	case granularity >= time.Minute && granularity < 5*time.Minute:
 		timeFunc = "toStartOfMinute"
@@ -150,11 +147,11 @@ func BuildTimeSeriesQueries(
 	valueColumnName string,
 	tableName string,
 ) (
-	*builder.SelectDataset,
-	*builder.SelectDataset,
-	*builder.SelectDataset,
+	mainQuery *builder.SelectDataset,
+	timeSeries *builder.SelectDataset,
+	keySeries *builder.SelectDataset,
 ) {
-	mainQuery := builder.
+	mainQuery = builder.
 		Select(
 			builder.L(fmt.Sprintf(wrapTimeFunction(timeFunc), timeFunc, "insert_ts")).As("time"),
 			builder.L(valueColumnExp).As(valueColumnName),
@@ -181,7 +178,7 @@ func BuildTimeSeriesQueries(
 
 	// generate zero points in timeline
 	countNumbers := int64(math.Ceil(float64(to.Unix()-from.Unix()) / float64(granularitySeconds)))
-	timeSeries := builder.
+	timeSeries = builder.
 		Select(
 			builder.L("ts").As("time"),
 			builder.L("toUInt64(0)").As(valueColumnName),
@@ -201,7 +198,7 @@ func BuildTimeSeriesQueries(
 		)
 
 	// get keys for join zero points
-	keySeries := builder.
+	keySeries = builder.
 		Select(
 			builder.C(keyColumn),
 		).
@@ -222,22 +219,30 @@ func BuildTimeSeriesQueries(
 	return mainQuery, timeSeries, keySeries
 }
 
+const (
+	toStartOfWeek    = "toStartOfWeek"
+	toStartOfMonth   = "toStartOfMonth"
+	toStartOfQuarter = "toStartOfQuarter"
+)
+
+// nolint:goconst // its OK
 func wrapTimeGranulationFunction(timeFunc string) string {
 	switch timeFunc {
-	case "toStartOfWeek":
+	case toStartOfWeek:
 		return "toDateTime(toUnixTimestamp(toDateTime(%s(toDateTime('%s'), 3)))+number*%d)"
-	case "toStartOfMonth", "toStartOfQuarter":
+	case toStartOfMonth, toStartOfQuarter:
 		return "toDateTime(toUnixTimestamp(toDateTime(%s(toDateTime('%s'))))+number*%d)"
 	}
 
 	return "toDateTime(toUnixTimestamp(%s(toDateTime('%s')))+number*%d)"
 }
 
+// nolint:goconst // its OK
 func wrapTimeFunction(timeFunc string) string {
 	switch timeFunc {
-	case "toStartOfWeek":
+	case toStartOfWeek:
 		return "%s(%s, 3)"
-	case "toStartOfMonth", "toStartOfQuarter":
+	case toStartOfMonth, toStartOfQuarter:
 		return "%s(%s)"
 	}
 
@@ -286,6 +291,7 @@ func BuildPoints(timeLayout string, points []Point) UnifiedLinearPoints {
 			})
 		}
 
+		// nolint:scopelint // its OK
 		sort.Slice(serial[code], func(d, e int) bool {
 			return serial[code][d].Time < serial[code][e].Time
 		})

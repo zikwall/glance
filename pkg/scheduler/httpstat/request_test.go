@@ -2,8 +2,9 @@ package httpstat
 
 import (
 	"context"
-	"github.com/zikwall/glance"
 	"testing"
+
+	"github.com/zikwall/glance"
 )
 
 func TestRequestContext(t *testing.T) {
@@ -13,9 +14,9 @@ func TestRequestContext(t *testing.T) {
 	t.Run("it should be successfully send requests", func(t *testing.T) {
 		mockRequests := glance.Collection{
 			Streams: map[string]glance.WorkerItem{
-				"1": {"1", "https://github.com/"},
-				"2": {"2", "https://google.com/"},
-				"3": {"3", "https://news.yahoo.com/"},
+				"1": {ID: "1", URL: "https://github.com/"},
+				"2": {ID: "2", URL: "https://google.com/"},
+				"3": {ID: "3", URL: "https://news.yahoo.com/"},
 			},
 		}
 

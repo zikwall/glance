@@ -3,13 +3,14 @@ package metric
 import (
 	"bufio"
 	"fmt"
-	"github.com/zikwall/glance/pkg/log"
-	"github.com/zikwall/glance/pkg/workers/errorless"
 	"io"
 	"io/ioutil"
 	"net/url"
 	"os"
 	"os/exec"
+
+	"github.com/zikwall/glance/pkg/log"
+	"github.com/zikwall/glance/pkg/workers/errorless"
 )
 
 type process struct {
@@ -19,7 +20,7 @@ type process struct {
 	f   *os.File
 }
 
-func (a *Worker) execute(rtmp string, id string) (*process, error) {
+func (a *Worker) execute(rtmp, id string) (*process, error) {
 	file, err := ioutil.TempFile("./tmp", fmt.Sprintf("%s_go_tmp_stream_err_*.log", id))
 	if err != nil {
 		return nil, err
@@ -32,8 +33,7 @@ func (a *Worker) execute(rtmp string, id string) (*process, error) {
 
 	var args []string
 	for _, value := range a.options.HTTPHeaders {
-		args = append(args, "-headers")
-		args = append(args, value)
+		args = append(args, "-headers", value)
 	}
 	args = append(args, []string{
 		"-loglevel", "error",
@@ -78,7 +78,7 @@ func (p *process) clearResources() {
 func (p *process) killProcesses(name, id string) {
 	if err := p.cmd.Process.Kill(); err != nil && !errorless.IsFinished(err) {
 		errorless.Warning(name,
-			fmt.Sprintf("[#%s] failed to kill async proccess PID %d %s", id, p.cmd.Process.Pid, err),
+			fmt.Sprintf("[#%s] failed to kill async process PID %d %s", id, p.cmd.Process.Pid, err),
 		)
 	}
 }
