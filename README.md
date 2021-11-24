@@ -1,3 +1,5 @@
+[![build](https://github.com/zikwall/glance/workflows/golangci-lint/badge.svg)](https://github.com/zikwall/glance/actions)
+
 ## Glance
 
 **Glance** is a portable, event-driven, 
