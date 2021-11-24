@@ -3,6 +3,7 @@ package clickhouse
 import (
 	clickhousebuffer "github.com/zikwall/clickhouse-buffer"
 	"github.com/zikwall/clickhouse-buffer/src/buffer"
+
 	"github.com/zikwall/glance"
 )
 
@@ -15,8 +16,8 @@ func New(writer clickhousebuffer.Writer) *Clickhouse {
 	return ch
 }
 
-func (c *Clickhouse) ProcessFrameBatch(batch glance.Batch) error {
-	bucket := Batch(batch)
+func (c *Clickhouse) ProcessFrameBatch(batch *glance.Batch) error {
+	bucket := Batch(*batch)
 	c.writer.WriteRow(&bucket)
 
 	return nil

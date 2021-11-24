@@ -8,7 +8,7 @@ import (
 
 // Storage basic interface that implements data saving
 type Storage interface {
-	ProcessFrameBatch(batch Batch) error
+	ProcessFrameBatch(batch *Batch) error
 }
 
 // Fetcher interface that implements formatting of screenshot links

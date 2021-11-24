@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/zikwall/glance/pkg/log"
-	"github.com/zikwall/glance/pkg/workers/errorless"
 	"sync"
 	"time"
+
+	"github.com/zikwall/glance/pkg/log"
+	"github.com/zikwall/glance/pkg/workers/errorless"
 )
 
 const shutdownWaitDuration = time.Second * 5
@@ -26,12 +27,12 @@ type Workspace struct {
 	done chan struct{}
 }
 
-func NewWorkspace(context context.Context, worker Worker) *Workspace {
+func NewWorkspace(ctx context.Context, worker Worker) *Workspace {
 	return &Workspace{
 		mu:      sync.RWMutex{},
 		tasks:   map[string]Process{},
 		worker:  worker,
-		context: context,
+		context: ctx,
 		wg:      sync.WaitGroup{},
 		done:    make(chan struct{}),
 	}

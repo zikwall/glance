@@ -3,9 +3,10 @@ package screenshot
 import (
 	"context"
 	"fmt"
+	"os/exec"
+
 	"github.com/zikwall/glance"
 	"github.com/zikwall/glance/pkg/workers/errorless"
-	"os/exec"
 )
 
 type Worker struct {

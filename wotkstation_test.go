@@ -3,9 +3,10 @@ package glance
 import (
 	"context"
 	"errors"
-	"github.com/zikwall/glance/pkg/workers/errorless"
 	"testing"
 	"time"
+
+	"github.com/zikwall/glance/pkg/workers/errorless"
 )
 
 type MockWorker struct{}
@@ -40,6 +41,7 @@ func (w *MockWorker) Label() string {
 	return "mock_worker/"
 }
 
+// nolint:gocyclo // its OK cyclomatic complexity not important here
 func TestNewWorkstation(t *testing.T) {
 	ctx, cancelFunc := context.WithCancel(context.Background())
 

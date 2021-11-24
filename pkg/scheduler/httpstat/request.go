@@ -3,11 +3,12 @@ package httpstat
 import (
 	"context"
 	"fmt"
-	"github.com/zikwall/glance/pkg/log"
 	"math"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/zikwall/glance/pkg/log"
 )
 
 type future struct {

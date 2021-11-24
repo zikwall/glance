@@ -3,11 +3,12 @@ package glance
 import (
 	"context"
 	"fmt"
-	"github.com/zikwall/glance/pkg/log"
 	"runtime"
 	"sort"
 	"sync"
 	"time"
+
+	"github.com/zikwall/glance/pkg/log"
 )
 
 type WorkerItem struct {

@@ -2,9 +2,10 @@ package httpstat
 
 import (
 	"context"
+	"time"
+
 	"github.com/zikwall/glance"
 	"github.com/zikwall/glance/pkg/log"
-	"time"
 )
 
 const threads = 3

@@ -3,9 +3,10 @@ package process
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/zikwall/glance"
 	"github.com/zikwall/glance/pkg/log"
-	"time"
 )
 
 type Options struct {

@@ -2,8 +2,9 @@ package errorless
 
 import (
 	"fmt"
-	"github.com/zikwall/glance/pkg/log"
 	"strings"
+
+	"github.com/zikwall/glance/pkg/log"
 )
 
 func Warning(worker, message string) {

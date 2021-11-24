@@ -4,13 +4,14 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"github.com/zikwall/glance"
-	"github.com/zikwall/glance/pkg/log"
-	"github.com/zikwall/glance/pkg/workers/errorless"
 	"io"
 	"math"
 	"os/exec"
 	"strings"
+
+	"github.com/zikwall/glance"
+	"github.com/zikwall/glance/pkg/log"
+	"github.com/zikwall/glance/pkg/workers/errorless"
 )
 
 type Worker struct {
@@ -34,10 +35,12 @@ func (w *Worker) Name() string {
 	return metric
 }
 
+// nolint:stylecheck // its OK
 func (w *Worker) Label() string {
 	return metric
 }
 
+// nolint:gocyclo // its OK cyclomatic complexity not important here
 func (w *Worker) Perform(ctx context.Context, stream glance.WorkerStream) {
 	id := stream.GetID()
 
@@ -138,7 +141,7 @@ func (w *Worker) Perform(ctx context.Context, stream glance.WorkerStream) {
 
 					if frame.Frames != 1 {
 						batch := glance.CreateBatch(id, frame)
-						if err := w.storage.ProcessFrameBatch(batch); err != nil {
+						if err := w.storage.ProcessFrameBatch(&batch); err != nil {
 							log.Warning(err)
 						}
 					}
