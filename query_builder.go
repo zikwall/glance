@@ -172,7 +172,7 @@ func BuildTimeSeriesQueries(
 		).
 		GroupBy(
 			builder.C("time"),
-			builder.C(keyColumn),
+			builder.C(keyAs),
 		).
 		Order(
 			builder.I("time").Asc(),
@@ -184,7 +184,7 @@ func BuildTimeSeriesQueries(
 		Select(
 			builder.L("ts").As("time"),
 			builder.L("toUInt64(0)").As(valueAs),
-			builder.C(keyColumn),
+			builder.C(keyColumn).As(keyAs),
 		).
 		From(
 			builder.
@@ -202,7 +202,7 @@ func BuildTimeSeriesQueries(
 	// get keys for join zero points
 	keySeries = builder.
 		Select(
-			builder.C(keyColumn),
+			builder.C(keyColumn).As(keyAs),
 		).
 		From(tableName).
 		Where(
@@ -214,7 +214,7 @@ func BuildTimeSeriesQueries(
 			),
 		).
 		GroupBy(
-			builder.C(keyColumn),
+			builder.C(keyAs),
 		).
 		As("Y")
 
