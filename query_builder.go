@@ -157,7 +157,7 @@ func BuildTimeSeriesQueries(
 		Select(
 			builder.L(fmt.Sprintf(wrapTimeFunction(timeFunc), timeFunc, "insert_ts")).As("time"),
 			builder.L(valueColumnExp).As(valueAs),
-			builder.C(keyAs),
+			builder.C(keyColumn).As(keyAs),
 		).
 		From(tableName).
 		Where(
@@ -184,7 +184,7 @@ func BuildTimeSeriesQueries(
 		Select(
 			builder.L("ts").As("time"),
 			builder.L("toUInt64(0)").As(valueAs),
-			builder.C(keyColumn).As(keyAs),
+			builder.C(keyAs),
 		).
 		From(
 			builder.
@@ -202,7 +202,7 @@ func BuildTimeSeriesQueries(
 	// get keys for join zero points
 	keySeries = builder.
 		Select(
-			builder.C(keyColumn),
+			builder.C(keyColumn).As(keyAs),
 		).
 		From(tableName).
 		Where(
@@ -214,7 +214,7 @@ func BuildTimeSeriesQueries(
 			),
 		).
 		GroupBy(
-			builder.C(keyColumn),
+			builder.C(keyAs),
 		).
 		As("Y")
 
