@@ -130,6 +130,7 @@ func BuildTimeSeriesQuery(main, times, keys *builder.SelectDataset) *builder.Sel
 //		timeFunc,
 //		granularitySeconds,
 //		"platform",
+//		"platforms"
 //		"uniq(device_id)",
 //		"uniqs",
 //		"stream.heatmap",
@@ -143,8 +144,9 @@ func BuildTimeSeriesQueries(
 	timeFunc string,
 	granularitySeconds int64,
 	keyColumn string,
+	keyAs string,
 	valueColumnExp string,
-	valueColumnName string,
+	valueAs string,
 	tableName string,
 ) (
 	mainQuery *builder.SelectDataset,
@@ -154,8 +156,8 @@ func BuildTimeSeriesQueries(
 	mainQuery = builder.
 		Select(
 			builder.L(fmt.Sprintf(wrapTimeFunction(timeFunc), timeFunc, "insert_ts")).As("time"),
-			builder.L(valueColumnExp).As(valueColumnName),
-			builder.C(keyColumn),
+			builder.L(valueColumnExp).As(valueAs),
+			builder.C(keyColumn).As(keyAs),
 		).
 		From(tableName).
 		Where(
@@ -181,7 +183,7 @@ func BuildTimeSeriesQueries(
 	timeSeries = builder.
 		Select(
 			builder.L("ts").As("time"),
-			builder.L("toUInt64(0)").As(valueColumnName),
+			builder.L("toUInt64(0)").As(valueAs),
 			builder.C(keyColumn),
 		).
 		From(
