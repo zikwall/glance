@@ -1,6 +1,7 @@
 package glance
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math"
@@ -8,6 +9,7 @@ import (
 	"time"
 
 	builder "github.com/doug-martin/goqu/v9"
+	"github.com/jmoiron/sqlx"
 )
 
 var (
@@ -84,6 +86,11 @@ func GranularityToString(granularity time.Duration) (timeFunc string, seconds in
 	return timeFunc, seconds, nil
 }
 
+type SummaryResponse struct {
+	Value int64  `json:"value" db:"value"`
+	Label string `json:"label" db:"label"`
+}
+
 // BuildSummaryQuery Suitable for Pie-type charts
 func BuildSummaryQuery(from, to time.Time, valueExp, keyColumn, tableName string) *builder.SelectDataset {
 	query := builder.
@@ -111,6 +118,12 @@ func BuildSummaryQuery(from, to time.Time, valueExp, keyColumn, tableName string
 	return query
 }
 
+type TimeSeriesResponse struct {
+	Key   string    `db:"key"`
+	Value int64     `db:"value"`
+	Time  time.Time `db:"time"`
+}
+
 // BuildTimeSeriesQuery Unified creates a final time series query
 //
 // sql, _, _ := mainSeries.ToSQL()
@@ -130,6 +143,7 @@ func BuildTimeSeriesQuery(main, times, keys *builder.SelectDataset) *builder.Sel
 //		timeFunc,
 //		granularitySeconds,
 //		"platform",
+//		"platforms"
 //		"uniq(device_id)",
 //		"uniqs",
 //		"stream.heatmap",
@@ -139,10 +153,12 @@ func BuildTimeSeriesQuery(main, times, keys *builder.SelectDataset) *builder.Sel
 // mainSeries.Where(...)
 // timeSeries.Where(...)
 func BuildTimeSeriesQueries(
-	from, to time.Time,
+	from time.Time,
+	to time.Time,
 	timeFunc string,
 	granularitySeconds int64,
 	keyColumn string,
+	keyColumnName string,
 	valueColumnExp string,
 	valueColumnName string,
 	tableName string,
@@ -155,7 +171,7 @@ func BuildTimeSeriesQueries(
 		Select(
 			builder.L(fmt.Sprintf(wrapTimeFunction(timeFunc), timeFunc, "insert_ts")).As("time"),
 			builder.L(valueColumnExp).As(valueColumnName),
-			builder.C(keyColumn),
+			builder.C(keyColumn).As(keyColumnName),
 		).
 		From(tableName).
 		Where(
@@ -170,7 +186,7 @@ func BuildTimeSeriesQueries(
 		).
 		GroupBy(
 			builder.C("time"),
-			builder.C(keyColumn),
+			builder.C(keyColumnName),
 		).
 		Order(
 			builder.I("time").Asc(),
@@ -182,13 +198,15 @@ func BuildTimeSeriesQueries(
 		Select(
 			builder.L("ts").As("time"),
 			builder.L("toUInt64(0)").As(valueColumnName),
-			builder.C(keyColumn),
+			builder.C(keyColumnName),
 		).
 		From(
 			builder.
 				Select(
 					builder.L(
-						fmt.Sprintf(wrapTimeGranulationFunction(timeFunc), timeFunc, Datetime(from), granularitySeconds),
+						fmt.Sprintf(
+							wrapTimeGranulationFunction(timeFunc), timeFunc, Datetime(from), granularitySeconds,
+						),
 					).As("ts"),
 				).
 				From(
@@ -200,7 +218,7 @@ func BuildTimeSeriesQueries(
 	// get keys for join zero points
 	keySeries = builder.
 		Select(
-			builder.C(keyColumn),
+			builder.C(keyColumn).As(keyColumnName),
 		).
 		From(tableName).
 		Where(
@@ -212,11 +230,74 @@ func BuildTimeSeriesQueries(
 			),
 		).
 		GroupBy(
-			builder.C(keyColumn),
+			builder.C(keyColumnName),
 		).
 		As("Y")
 
 	return mainQuery, timeSeries, keySeries
+}
+
+type Point struct {
+	Value int64  `json:"value"`
+	Time  string `json:"time"`
+}
+
+type UnifiedLinearPoints map[string][]Point
+type timesMap map[string]map[int64]int64
+
+func BuildPoints(
+	ctx context.Context,
+	ch *sqlx.DB,
+	mainSeries *builder.SelectDataset,
+	timeSeries *builder.SelectDataset,
+	keySeries *builder.SelectDataset,
+	timeLayout string,
+) (
+	UnifiedLinearPoints,
+	error,
+) {
+	var points []TimeSeriesResponse
+	rawQuery, _, _ := BuildTimeSeriesQuery(mainSeries, timeSeries, keySeries).ToSQL()
+	if err := ch.SelectContext(ctx, &points, rawQuery); err != nil {
+		return nil, err
+	}
+
+	times := timesMap{}
+	for _, stat := range points {
+		key := stat.Key
+		value := stat.Value
+		point := stat.Time
+
+		if _, ok := times[key]; !ok {
+			times[key] = map[int64]int64{}
+		}
+
+		t := point.Unix()
+		if v, ok := times[key][t]; !ok || value >= v {
+			times[key][t] = value
+		}
+	}
+
+	serial := map[string][]Point{}
+	for code, timeSeries := range times {
+		if _, ok := serial[code]; !ok {
+			serial[code] = []Point{}
+		}
+
+		for t, v := range timeSeries {
+			serial[code] = append(serial[code], Point{
+				Value: v,
+				Time:  dateFormat(timeLayout, t),
+			})
+		}
+
+		// nolint:scopelint // its OK
+		sort.Slice(serial[code], func(d, e int) bool {
+			return serial[code][d].Time < serial[code][e].Time
+		})
+	}
+
+	return serial, nil
 }
 
 const (
@@ -247,56 +328,6 @@ func wrapTimeFunction(timeFunc string) string {
 	}
 
 	return "%s(%s)"
-}
-
-type Point struct {
-	Key   string
-	Value int64
-	Time  time.Time
-}
-type point struct {
-	Value int64  `json:"value"`
-	Time  string `json:"time"`
-}
-type UnifiedLinearPoints map[string][]point
-type timesMap map[string]map[int64]int64
-
-func BuildPoints(timeLayout string, points []Point) UnifiedLinearPoints {
-	times := timesMap{}
-	for _, stat := range points {
-		key := stat.Key
-		value := stat.Value
-		point := stat.Time
-
-		if _, ok := times[key]; !ok {
-			times[key] = map[int64]int64{}
-		}
-
-		t := point.Unix()
-		if v, ok := times[key][t]; !ok || value >= v {
-			times[key][t] = value
-		}
-	}
-
-	serial := map[string][]point{}
-	for code, timeSeries := range times {
-		if _, ok := serial[code]; !ok {
-			serial[code] = []point{}
-		}
-
-		for t, v := range timeSeries {
-			serial[code] = append(serial[code], point{
-				Value: v,
-				Time:  dateFormat(timeLayout, t),
-			})
-		}
-
-		// nolint:scopelint // its OK
-		sort.Slice(serial[code], func(d, e int) bool {
-			return serial[code][d].Time < serial[code][e].Time
-		})
-	}
-	return serial
 }
 
 func dateFormat(layout string, d int64) string {
